@@ -22,7 +22,6 @@ export const AssessmentPage: React.FC = () => {
 
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
   const [stressArea, setStressArea] = useState<StressArea>('Both');
-  // Initialize synchronously with 20 items so it is NEVER blank or empty
   const [questions, setQuestions] = useState<Question[]>(() => {
     return SEED_QUESTIONS.filter(q => q.stressArea === 'Both').slice(0, 20).map((q, idx) => ({ ...q, index: idx + 1 }));
   });
@@ -33,7 +32,6 @@ export const AssessmentPage: React.FC = () => {
 
   const [activeQuestionIndex, setActiveQuestionIndex] = useState<number>(0);
 
-  // Auto-sync questions from API whenever stressArea changes, with instant guaranteed fallback
   const loadAreaQuestions = async (area: StressArea) => {
     setLoading(true);
     setError(null);
@@ -45,8 +43,7 @@ export const AssessmentPage: React.FC = () => {
         const fallback = SEED_QUESTIONS.filter(q => q.stressArea === area).slice(0, 20).map((q, idx) => ({ ...q, index: idx + 1 }));
         setQuestions(fallback.length >= 20 ? fallback : SEED_QUESTIONS.slice(0, 20).map((q, idx) => ({ ...q, index: idx + 1 })));
       }
-    } catch (err: any) {
-      console.warn('Network question fetch error, using built-in questions:', err);
+    } catch {
       const fallback = SEED_QUESTIONS.filter(q => q.stressArea === area).slice(0, 20).map((q, idx) => ({ ...q, index: idx + 1 }));
       setQuestions(fallback.length >= 20 ? fallback : SEED_QUESTIONS.slice(0, 20).map((q, idx) => ({ ...q, index: idx + 1 })));
     } finally {
@@ -79,7 +76,6 @@ export const AssessmentPage: React.FC = () => {
   const answeredCount = Object.keys(answers).length;
   const allAnswered = questions.length > 0 && answeredCount === questions.length;
 
-  // Real-time Options Logic Telemetry
   const runningScore = Object.values(answers).reduce((acc, ans) => {
     if (ans === 'Yes') return acc + 2;
     if (ans === 'Sometimes') return acc + 1;
@@ -121,7 +117,7 @@ export const AssessmentPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-[calc(100vh-5rem)] bg-[#0B0C0E] text-[#EDEDED] relative overflow-hidden py-8">
+    <div className="min-h-[calc(100vh-4rem)] bg-[#0B0C0E] text-[#EDEDED] relative overflow-hidden py-8">
       {/* Background radial crimson glow */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[700px] h-[450px] bg-[#E50914]/[0.05] rounded-full blur-[140px] pointer-events-none" />
 
@@ -146,7 +142,6 @@ export const AssessmentPage: React.FC = () => {
               </h1>
             </div>
 
-            {/* Stepper Markers */}
             {/* Stepper Markers */}
             <div className="flex items-center gap-2 font-mono text-xs">
               <button
@@ -416,7 +411,7 @@ export const AssessmentPage: React.FC = () => {
                     </h2>
                   </div>
 
-                  {/* 3 High-Impact Choice Buttons Connected Directly to Stress Logic */}
+                  {/* 3 High-Impact Choice Buttons */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     
                     {/* Choice: Yes */}
@@ -454,10 +449,10 @@ export const AssessmentPage: React.FC = () => {
                       <span className={`font-mono text-[11px] block mt-1 tracking-wider ${
                         currentAnswer === 'Sometimes' ? 'text-amber-400 font-bold' : 'text-[#8E8E93]'
                       }`}>
-                        OCCASIONAL (+1 PT)
+                        PERIODIC (+1 PT)
                       </span>
                       <span className="text-[10px] text-[#71717A] font-light block mt-1">
-                        Emerging Stressor
+                        Moderate Stressor
                       </span>
                     </button>
 
@@ -475,7 +470,7 @@ export const AssessmentPage: React.FC = () => {
                       <span className={`font-mono text-[11px] block mt-1 tracking-wider ${
                         currentAnswer === 'No' ? 'text-emerald-400 font-bold' : 'text-[#8E8E93]'
                       }`}>
-                        RARE / NEVER (0 PTS)
+                        ABSENT (0 PTS)
                       </span>
                       <span className="text-[10px] text-[#71717A] font-light block mt-1">
                         Protective Resilience
@@ -484,13 +479,13 @@ export const AssessmentPage: React.FC = () => {
 
                   </div>
 
-                  {/* Bottom Navigation */}
-                  <div className="pt-6 border-t border-white/10 flex items-center justify-between">
+                  {/* Navigation Bottom Controls */}
+                  <div className="pt-4 border-t border-white/10 flex items-center justify-between">
                     <button
                       type="button"
                       disabled={activeQuestionIndex === 0}
                       onClick={() => setActiveQuestionIndex(i => Math.max(0, i - 1))}
-                      className="px-5 py-2.5 bg-[#17181F] border border-white/10 rounded-full text-white font-mono text-xs uppercase tracking-wider hover:border-white/25 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer flex items-center gap-2"
+                      className="px-5 py-2.5 bg-white/5 border border-white/10 rounded-full font-mono text-xs uppercase tracking-wider text-[#8E8E93] hover:text-white disabled:opacity-30 disabled:pointer-events-none flex items-center gap-2 cursor-pointer"
                     >
                       <ArrowLeft className="w-3.5 h-3.5" />
                       <span>Previous</span>
@@ -528,7 +523,6 @@ export const AssessmentPage: React.FC = () => {
               </span>
               <div className="grid grid-cols-10 sm:grid-cols-20 gap-2 font-mono text-xs">
                 {questions.map((q, idx) => {
-                  const isAnswered = answers[q.id] !== undefined;
                   const isCurrent = idx === activeQuestionIndex;
                   const ansValue = answers[q.id];
 
@@ -574,7 +568,7 @@ export const AssessmentPage: React.FC = () => {
               </div>
               <button
                 onClick={() => setCurrentStep(2)}
-                className="text-xs font-mono text-[#E50914] uppercase tracking-wider hover:underline"
+                className="text-xs font-mono text-[#E50914] uppercase tracking-wider hover:underline cursor-pointer"
               >
                 Modify Answers &rarr;
               </button>
@@ -640,7 +634,7 @@ export const AssessmentPage: React.FC = () => {
                       ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
                       : 'bg-white/10 text-white'
                   }`}>
-                    {answers[q.id] || 'UNANSWERED'}
+                    {answers[q.id] || 'Unanswered'}
                   </span>
                 </div>
               ))}
@@ -650,28 +644,21 @@ export const AssessmentPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setCurrentStep(2)}
-                className="px-5 py-2.5 bg-[#17181F] border border-white/10 rounded-full text-white font-mono text-xs uppercase tracking-wider hover:border-white/20"
+                className="px-5 py-2.5 bg-white/5 border border-white/10 rounded-full font-mono text-xs uppercase tracking-wider text-[#8E8E93] hover:text-white cursor-pointer"
               >
-                Back to Questions
+                Back to Questionnaire
               </button>
 
               <button
                 type="button"
-                disabled={!allAnswered || submitting}
+                disabled={submitting || !allAnswered}
                 onClick={handleSubmitAssessment}
-                className="inline-flex items-center gap-3 px-7 py-3.5 bg-[#E50914] hover:bg-[#c20811] text-white rounded-full text-xs font-semibold uppercase tracking-wider transition-all shadow-md group cursor-pointer disabled:opacity-50"
+                className="inline-flex items-center gap-3 px-8 py-3.5 bg-[#E50914] hover:bg-[#c20811] text-white rounded-full text-xs font-semibold uppercase tracking-wider transition-all shadow-md group cursor-pointer disabled:opacity-50"
               >
-                {submitting ? (
-                  <span>Processing Prediction & Generating Dossier...</span>
-                ) : (
-                  <>
-                    <Send className="w-4 h-4" />
-                    <span>Persist & View Comprehensive Analytics</span>
-                    <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center group-hover:translate-x-0.5 transition-transform">
-                      <ArrowRight className="w-3 h-3 text-white" />
-                    </div>
-                  </>
-                )}
+                <span>{submitting ? 'Analyzing & Persisting...' : 'Calculate Final Score & Report'}</span>
+                <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center group-hover:translate-x-0.5 transition-transform">
+                  <ArrowRight className="w-3 h-3 text-white" />
+                </div>
               </button>
             </div>
           </div>

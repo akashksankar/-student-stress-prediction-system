@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../services/api';
-import { FileText, ArrowRight, Activity } from 'lucide-react';
+import { FileText, ArrowRight, Activity, Calendar, ShieldCheck } from 'lucide-react';
 
 export const AssessmentHistoryPage: React.FC = () => {
   const [assessments, setAssessments] = useState<any[]>([]);
@@ -16,7 +16,7 @@ export const AssessmentHistoryPage: React.FC = () => {
     setLoading(true);
     try {
       const res = await api.getStudentAssessments();
-      setAssessments(res.assessments);
+      setAssessments(res.assessments || []);
     } catch (err: any) {
       setError(err.message || 'Failed to retrieve assessment history.');
     } finally {
@@ -25,7 +25,7 @@ export const AssessmentHistoryPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-[calc(100vh-5rem)] bg-[#0B0C0E] text-[#EDEDED] relative overflow-hidden py-8">
+    <div className="min-h-[calc(100vh-4rem)] bg-[#0B0C0E] text-[#EDEDED] relative overflow-hidden py-8">
       {/* Background radial crimson glow */}
       <div className="absolute top-20 right-1/3 w-[600px] h-[400px] bg-[#E50914]/[0.05] rounded-full blur-[140px] pointer-events-none" />
 
@@ -54,9 +54,7 @@ export const AssessmentHistoryPage: React.FC = () => {
           >
             <Activity className="w-4 h-4 text-white" />
             <span>New Screening</span>
-            <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center group-hover:translate-x-0.5 transition-transform">
-              <ArrowRight className="w-3 h-3 text-white" />
-            </div>
+            <ArrowRight className="w-3 h-3 text-white" />
           </Link>
         </div>
 
@@ -64,7 +62,7 @@ export const AssessmentHistoryPage: React.FC = () => {
           <div className="bg-[#111216] border border-white/10 rounded-2xl p-12 text-center font-mono text-xs text-[#8E8E93] animate-pulse">
             LOADING HISTORICAL ARCHIVES...
           </div>
-        ) : error ? (
+        ) : error && assessments.length === 0 ? (
           <div className="p-4 bg-[#E50914]/10 border border-[#E50914]/40 rounded-xl text-xs font-mono text-[#FF4D57]">
             {error}
           </div>
@@ -95,46 +93,34 @@ export const AssessmentHistoryPage: React.FC = () => {
                     <th className="py-3.5 px-5">Domain Focus</th>
                     <th className="py-3.5 px-5 text-center">Score</th>
                     <th className="py-3.5 px-5">Classification</th>
-                    <th className="py-3.5 px-5">Leading Factors</th>
                     <th className="py-3.5 px-5 text-right">Dossier</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/5">
+                <tbody className="divide-y divide-white/5 font-mono">
                   {assessments.map((a) => (
                     <tr key={a.id} className="hover:bg-white/[0.02] transition-colors">
-                      <td className="py-4 px-5 font-mono font-semibold text-white">
-                        ASM-{a.id.toString().padStart(4, '0')}
-                      </td>
-                      <td className="py-4 px-5 font-mono text-[#8E8E93]">
-                        {new Date(a.completedAt).toLocaleDateString()}
-                      </td>
-                      <td className="py-4 px-5 text-white font-medium">
-                        {a.stressArea}
-                      </td>
-                      <td className="py-4 px-5 text-center font-mono font-bold text-[#E50914]">
-                        {a.totalScore} / 40
-                      </td>
+                      <td className="py-4 px-5 text-[#E50914] font-bold">ASM-{a.id.toString().padStart(4, '0')}</td>
+                      <td className="py-4 px-5 text-white">{new Date(a.completed_at || a.completedAt).toLocaleDateString()}</td>
+                      <td className="py-4 px-5">{a.stress_area || a.stressArea} (20 Items)</td>
+                      <td className="py-4 px-5 text-center text-white font-bold">{a.total_score || a.totalScore} / 40</td>
                       <td className="py-4 px-5">
-                        <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-mono uppercase tracking-wider ${
-                          a.stressLevel === 'High'
-                            ? 'bg-[#E50914]/15 text-[#E50914] border border-[#E50914]/30'
-                            : a.stressLevel === 'Moderate'
-                            ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
-                            : 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                        <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase ${
+                          (a.stress_level || a.stressLevel) === 'High'
+                            ? 'bg-[#E50914]/20 text-[#E50914] border border-[#E50914]/40'
+                            : (a.stress_level || a.stressLevel) === 'Moderate'
+                            ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40'
+                            : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
                         }`}>
-                          {a.stressLevel}
+                          {a.stress_level || a.stressLevel}
                         </span>
-                      </td>
-                      <td className="py-4 px-5 text-[#8E8E93] text-xs max-w-xs truncate">
-                        {a.contributingFactors?.slice(0, 2).join(', ') || 'Routine balance'}
                       </td>
                       <td className="py-4 px-5 text-right">
                         <Link
                           to={`/results/${a.id}`}
-                          className="text-[#E50914] hover:underline font-mono text-xs uppercase tracking-wider inline-flex items-center gap-1"
+                          className="text-[#E50914] hover:underline uppercase text-[11px] inline-flex items-center gap-1"
                         >
-                          <span>View Details</span>
-                          <ArrowRight className="w-3.5 h-3.5" />
+                          <span>View Report</span>
+                          <ArrowRight className="w-3 h-3" />
                         </Link>
                       </td>
                     </tr>

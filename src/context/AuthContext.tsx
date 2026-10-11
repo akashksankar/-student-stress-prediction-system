@@ -9,7 +9,6 @@ interface AuthContextType {
   register: (data: any) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
-  quickLogin: (role: 'student' | 'admin' | 'counsellor') => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -18,12 +17,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(() => getStoredUser());
   const [loading, setLoading] = useState<boolean>(true);
 
+  useEffect(() => {
+    refreshUser().finally(() => setLoading(false));
+  }, []);
+
   const refreshUser = async () => {
     const token = getStoredToken();
     if (!token) {
       setUser(null);
       setStoredUser(null);
-      setLoading(false);
       return;
     }
 
@@ -31,37 +33,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const res = await api.getCurrentUser();
       setUser(res.user);
       setStoredUser(res.user);
-    } catch (err) {
-      console.warn('Session verification fallback to cached profile:', err);
+    } catch {
+      // In case of network glitch or client session on Vercel, keep local session
       const cached = getStoredUser();
       if (cached) {
         setUser(cached);
-      } else {
-        setStoredToken(null);
-        setStoredUser(null);
-        setUser(null);
       }
-    } finally {
-      setLoading(false);
     }
   };
-
-  useEffect(() => {
-    refreshUser();
-  }, []);
 
   const login = async (email: string, pass: string) => {
     const res = await api.login({ email, password: pass });
     setStoredToken(res.token);
-    setStoredUser(res.user);
     setUser(res.user);
+    setStoredUser(res.user);
   };
 
   const register = async (data: any) => {
     const res = await api.register(data);
     setStoredToken(res.token);
-    setStoredUser(res.user);
     setUser(res.user);
+    setStoredUser(res.user);
   };
 
   const logout = () => {
@@ -70,40 +62,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
   };
 
-  const quickLogin = async (role: 'student' | 'admin' | 'counsellor') => {
-    if (role === 'admin') {
-      await login('admin@stresspredict.edu', 'Admin@12345');
-    } else if (role === 'counsellor') {
-      await login('counsellor@stresspredict.edu', 'Counsellor@12345');
-    } else {
-      // Try demo student login or register if not existing
-      try {
-        await login('alex.student@stresspredict.edu', 'Student@12345');
-      } catch {
-        await register({
-          fullName: 'Alex Morgan',
-          email: 'alex.student@stresspredict.edu',
-          password: 'Student@12345',
-          confirmPassword: 'Student@12345',
-          course: 'MCA Computer Applications',
-          academicYear: 'Year 2',
-          age: 22
-        });
-      }
-    }
-  };
-
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, refreshUser, quickLogin }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-export function useAuth() {
+export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-}
+};

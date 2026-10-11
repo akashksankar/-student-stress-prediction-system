@@ -145,107 +145,84 @@ function getLocalAssessments(): any[] {
         noPercentage: 15
       },
       domainBreakdown: [
-        { domain: 'Academic Workload', score: 7, maxScore: 8, percentage: 88, severity: 'High' },
-        { domain: 'Evaluation Anxiety', score: 6, maxScore: 8, percentage: 75, severity: 'High' },
-        { domain: 'Sleep & Physical Health', score: 6, maxScore: 8, percentage: 75, severity: 'High' },
-        { domain: 'Environmental Climate', score: 5, maxScore: 8, percentage: 63, severity: 'Moderate' },
-        { domain: 'Emotional Well-being', score: 4, maxScore: 8, percentage: 50, severity: 'Moderate' }
+        { domain: 'Academic Workload & Deadlines', score: 7, maxScore: 8, percentage: 88, severity: 'High' },
+        { domain: 'Evaluation & Exam Anxiety', score: 7, maxScore: 8, percentage: 88, severity: 'High' },
+        { domain: 'Sleep & Somatization Factors', score: 6, maxScore: 8, percentage: 75, severity: 'High' },
+        { domain: 'Environmental & Routine Climate', score: 5, maxScore: 8, percentage: 63, severity: 'Moderate' },
+        { domain: 'Emotional Well-being & Coping', score: 3, maxScore: 8, percentage: 38, severity: 'Low' }
       ],
+      completedAt: new Date(Date.now() - 3 * 86400000).toISOString(),
       recommendations: [
-        { id: 1, category: 'CLINICAL INTERVENTION', suggestion: 'Connect with campus counsellor Dr. Evelyn Reed to build a workload recovery plan without academic penalties.' },
-        { id: 2, category: 'CIRCADIAN RHYTHM', suggestion: 'Establish a non-negotiable 7-hour sleep window tonight; sleep deprivation amplifies stress perception by 40%.' },
-        { id: 3, category: 'STUDY BLOCKS', suggestion: 'Implement 45/10 interval cycles to reduce cognitive overload and tension headaches.' }
-      ],
-      completedAt: new Date(Date.now() - 86400000 * 2).toISOString(),
-      counsellingRequest: { id: 1, status: 'Reviewed', summary: 'Elevated stress protocol flagged', created_at: new Date().toISOString() }
+        { id: 1, stressLevel: 'High', category: 'Supportive Guidance', suggestion: 'Break continuous study sessions into timed intervals with restorative breaks.' },
+        { id: 2, stressLevel: 'High', category: 'Counselling Referral', suggestion: 'Schedule a confidential consultation with Dr. Evelyn Reed to structure an academic pacing plan.' }
+      ]
     }
   ];
 }
 
-function saveLocalAssessments(items: any[]) {
+function saveLocalAssessments(data: any[]) {
   try {
-    localStorage.setItem('spss_local_assessments', JSON.stringify(items));
+    localStorage.setItem('spss_local_assessments', JSON.stringify(data));
   } catch {}
 }
 
 function createClientToken(user: any): string {
-  const payload = {
+  const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+  const payload = btoa(JSON.stringify({
     userId: user.id,
     email: user.email,
     role: user.role,
-    name: user.name || user.email.split('@')[0],
-    exp: Math.floor(Date.now() / 1000) + 86400 * 7
-  };
-  return btoa(JSON.stringify(payload));
+    fullName: user.name || user.fullName,
+    exp: Math.floor(Date.now() / 1000) + 7 * 86400
+  }));
+  return `${header}.${payload}.client_signature`;
 }
 
-function decodeAnyToken(token: string): any {
+function parseTokenPayload(token: string): any | null {
   try {
-    if (token.includes('.')) {
-      const parts = token.split('.');
-      if (parts.length >= 2) {
-        return JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
-      }
+    const parts = token.split('.');
+    if (parts.length >= 2) {
+      return JSON.parse(atob(parts[1]));
     }
-    return JSON.parse(atob(token));
-  } catch {
-    return null;
-  }
+  } catch {}
+  return null;
 }
 
 // ---------------------------------------------------------------------------
-// Resilient Client Fallback Handler (Executes when /api is 404/500 on Vercel)
+// Resilient Client Fallback Handler (Zero-404 Guarantee for Vercel)
 // ---------------------------------------------------------------------------
 async function handleLocalFallback<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const method = (options.method || 'GET').toUpperCase();
-  const token = getStoredToken();
-  const currentUserPayload = token ? decodeAnyToken(token) : null;
   const users = getLocalUsers();
   const assessments = getLocalAssessments();
+  const token = getStoredToken();
+  const currentUserPayload = token ? parseTokenPayload(token) : null;
 
   // 1. Auth Login
   if (endpoint.startsWith('/auth/login') && method === 'POST') {
     const body = options.body ? JSON.parse(options.body as string) : {};
     const email = (body.email || '').trim().toLowerCase();
-    const pass = body.password || '';
+    const password = body.password || '';
 
-    let found = users.find(u => u.email.toLowerCase() === email);
-    
-    // Auto-create or verify demo accounts
-    if (!found) {
-      if (email.includes('admin')) {
-        found = { id: 4, name: 'Academic Administrator', email, password: pass, role: 'admin' };
-        users.push(found);
-        saveLocalUsers(users);
-      } else if (email.includes('counsellor')) {
-        found = { id: 3, name: 'Dr. Evelyn Reed', email, password: pass, role: 'counsellor' };
-        users.push(found);
-        saveLocalUsers(users);
-      } else if (email.includes('student') || email.includes('alex')) {
-        found = { id: 1, name: 'Alex Morgan', email, password: pass, role: 'student', course: 'MCA Computer Applications', academicYear: 'Year 2', age: 22 };
-        users.push(found);
-        saveLocalUsers(users);
-      } else {
-        throw new Error('No registered account found with this email. Please check your spelling or register a new profile.');
-      }
+    const user = users.find(u => u.email.toLowerCase() === email);
+    if (!user) {
+      throw new Error('Account not found with this email. Please check your credentials or register.');
+    }
+    if (user.password && user.password !== password) {
+      throw new Error('Incorrect password. Please verify your credentials.');
     }
 
-    // Verify password: allow registered password or demo defaults
-    if (found.password && found.password !== pass && pass !== 'Student@12345' && pass !== 'Admin@12345' && pass !== 'Counsellor@12345' && pass !== 'demo') {
-      throw new Error('Invalid password. Please check your credentials.');
-    }
-
-    const t = createClientToken(found);
+    const t = createClientToken(user);
     setStoredToken(t);
     const userObj: User = {
-      id: found.id,
-      fullName: found.name || 'User',
-      email: found.email,
-      role: found.role,
-      studentId: found.role === 'student' ? found.id : undefined,
-      counsellorId: found.role === 'counsellor' ? found.id : undefined,
-      course: found.course,
-      academicYear: found.academicYear
+      id: user.id,
+      fullName: user.name,
+      email: user.email,
+      role: user.role,
+      studentId: user.role === 'student' ? user.id : undefined,
+      counsellorId: user.role === 'counsellor' ? user.id : undefined,
+      course: user.course,
+      academicYear: user.academicYear
     };
     setStoredUser(userObj);
 
@@ -349,7 +326,6 @@ async function handleLocalFallback<T>(endpoint: string, options: RequestInit = {
       targetQuestions = SEED_QUESTIONS.filter(q => q.stressArea === 'Both');
     }
 
-    // Ensure exactly 20 items indexed 1 to 20
     const formatted = targetQuestions.slice(0, 20).map((q, idx) => ({
       ...q,
       index: idx + 1
@@ -371,7 +347,6 @@ async function handleLocalFallback<T>(endpoint: string, options: RequestInit = {
     let yesCount = 0;
     let sometimesCount = 0;
     let noCount = 0;
-    const categoryScores: { [cat: string]: number } = {};
     const affirmativeCategories: string[] = [];
 
     answers.forEach(a => {
@@ -397,7 +372,6 @@ async function handleLocalFallback<T>(endpoint: string, options: RequestInit = {
       }
 
       totalScore += itemScore;
-      categoryScores[cat] = (categoryScores[cat] || 0) + itemScore;
     });
 
     if (totalScore > 40) totalScore = 40;
@@ -415,107 +389,109 @@ async function handleLocalFallback<T>(endpoint: string, options: RequestInit = {
       noPercentage: Math.round((noCount / 20) * 100)
     };
 
-    // Calculate categorical domain breakdown
     const domainBreakdown: DomainScore[] = [
       {
         domain: 'Academic Workload & Deadlines',
-        score: Math.min(8, Math.round((totalScore * 0.28))),
+        score: Math.min(8, Math.round(totalScore * 0.28)),
         maxScore: 8,
         percentage: Math.min(100, Math.round((totalScore * 0.28 / 8) * 100)),
         severity: totalScore >= 27 ? 'High' : totalScore >= 14 ? 'Moderate' : 'Low'
       },
       {
-        domain: 'Evaluation & Performance Strain',
-        score: Math.min(8, Math.round((totalScore * 0.24))),
+        domain: 'Evaluation & Exam Anxiety',
+        score: Math.min(8, Math.round(totalScore * 0.24)),
         maxScore: 8,
         percentage: Math.min(100, Math.round((totalScore * 0.24 / 8) * 100)),
         severity: totalScore >= 25 ? 'High' : totalScore >= 12 ? 'Moderate' : 'Low'
       },
       {
-        domain: 'Sleep & Physical Somatization',
-        score: Math.min(8, Math.round((totalScore * 0.22))),
+        domain: 'Sleep & Somatization Factors',
+        score: Math.min(8, Math.round(totalScore * 0.22)),
         maxScore: 8,
         percentage: Math.min(100, Math.round((totalScore * 0.22 / 8) * 100)),
         severity: totalScore >= 24 ? 'High' : totalScore >= 14 ? 'Moderate' : 'Low'
       },
       {
         domain: 'Environmental & Routine Climate',
-        score: Math.min(8, Math.round((totalScore * 0.16))),
+        score: Math.min(8, Math.round(totalScore * 0.16)),
         maxScore: 8,
         percentage: Math.min(100, Math.round((totalScore * 0.16 / 8) * 100)),
         severity: totalScore >= 26 ? 'High' : totalScore >= 14 ? 'Moderate' : 'Low'
       },
       {
         domain: 'Emotional Well-being & Coping',
-        score: Math.min(8, Math.round((totalScore * 0.10))),
+        score: Math.min(8, Math.round(totalScore * 0.10)),
         maxScore: 8,
         percentage: Math.min(100, Math.round((totalScore * 0.10 / 8) * 100)),
         severity: totalScore >= 28 ? 'High' : totalScore >= 16 ? 'Moderate' : 'Low'
       }
     ];
 
-    const currentStudentId = currentUserPayload?.userId || 1;
-    const currentStudentName = currentUserPayload?.name || 'Student';
+    const studentId = currentUserPayload?.userId || 1;
+    const studentUser = users.find(u => u.id === studentId) || users[0];
+
+    const recs = stressLevel === 'High' ? [
+      { id: 1, stressLevel: 'High' as const, category: 'Immediate Workload Relief', suggestion: 'Coordinate with student advisory to prioritize upcoming milestone deliverables.' },
+      { id: 2, stressLevel: 'High' as const, category: 'Confidential Counselling', suggestion: 'Connect with campus counsellor Dr. Evelyn Reed for confidential academic pacing guidance.' }
+    ] : stressLevel === 'Moderate' ? [
+      { id: 3, stressLevel: 'Moderate' as const, category: 'Study Pacing', suggestion: 'Use 45-minute structured focus blocks separated by 10-minute screen-free breaks.' },
+      { id: 4, stressLevel: 'Moderate' as const, category: 'Restorative Sleep', suggestion: 'Preserve an uninterrupted 7-hour sleep window nightly to safeguard cognitive resilience.' }
+    ] : [
+      { id: 5, stressLevel: 'Low' as const, category: 'Preventative Routine', suggestion: 'Maintain balanced study rhythms and regular hydration throughout lecture days.' }
+    ];
 
     const newAssessment: AssessmentResult = {
       id: assessments.length + 1,
-      studentId: currentStudentId,
-      studentName: currentStudentName,
+      studentId: studentUser.id,
+      studentName: studentUser.name,
+      course: studentUser.course || 'MCA Computer Applications',
+      academicYear: studentUser.academicYear || 'Year 2',
       stressArea: body.stressArea || 'Both',
       totalScore,
       stressLevel,
-      optionDistribution,
-      domainBreakdown,
-      contributingFactors: affirmativeCategories.slice(0, 4),
-      recommendations: [
-        { id: 1, category: 'CIRCADIAN HYGIENE', suggestion: 'Maintain strict 7–8 hour restorative sleep. Screen downtime 30 min before bed improves cognitive retention by 35%.' },
-        { id: 2, category: 'WORKLOAD SPRINTING', suggestion: 'Adopt 45-minute focused study sprints followed by 10-minute active stretch breaks to alleviate physical tension.' },
-        { id: 3, category: 'CAMPUS SUPPORT', suggestion: 'Access the Confidential Counselling room or book an advisory session with Dr. Evelyn Reed for deadline relief.' }
-      ],
       completedAt: new Date().toISOString(),
-      counsellingRequest: stressLevel === 'High' ? {
-        id: assessments.length + 100,
-        status: 'Pending',
-        summary: `High stress threshold reached (Score ${totalScore}/40). Priority student support flagged.`,
-        created_at: new Date().toISOString()
-      } : null
+      contributingFactors: affirmativeCategories.slice(0, 4),
+      recommendations: recs,
+      optionDistribution,
+      domainBreakdown
     };
 
     assessments.unshift(newAssessment);
     saveLocalAssessments(assessments);
 
     return {
-      message: 'Assessment completed and analyzed.',
+      message: 'Assessment completed and analyzed successfully.',
       assessmentId: newAssessment.id,
       stressArea: newAssessment.stressArea,
-      totalScore: newAssessment.totalScore,
-      stressLevel: newAssessment.stressLevel,
-      optionDistribution: newAssessment.optionDistribution,
-      domainBreakdown: newAssessment.domainBreakdown,
+      totalScore,
+      stressLevel,
+      optionDistribution,
+      domainBreakdown,
       contributingFactors: newAssessment.contributingFactors,
-      recommendations: newAssessment.recommendations,
+      recommendations: recs,
       completedAt: newAssessment.completedAt
     } as unknown as T;
   }
 
-  // 7. Get Specific Result
-  if (endpoint.includes('/results/') || endpoint.includes('/result')) {
-    const parts = endpoint.split('/');
-    const id = parseInt(parts[parts.length - 1], 10);
-    const found = assessments.find(a => a.id === id) || assessments[0];
+  // 7. Assessment Result by ID
+  if (endpoint.includes('/assessments/result/') || endpoint.includes('/assessments/')) {
+    const idMatch = endpoint.match(/\/assessments\/(?:result\/)?(\d+)/);
+    const targetId = idMatch ? parseInt(idMatch[1], 10) : 1;
+    const found = assessments.find(a => a.id === targetId) || assessments[0];
     return { assessment: found } as unknown as T;
   }
 
-  // 8. Student Dashboard Endpoint with Analytics
+  // 8. Student Dashboard
   if (endpoint.startsWith('/student/dashboard')) {
-    const studentUser = users.find(u => u.id === (currentUserPayload?.userId || 1)) || users[0];
-    const userAssessments = assessments.filter(a => a.studentId === studentUser.id);
-    const latest = userAssessments.length > 0 ? userAssessments[0] : (studentUser.email.includes('alex') ? assessments[0] : null);
+    const studentId = currentUserPayload?.userId || 1;
+    const studentUser = users.find(u => u.id === studentId) || users[0];
+    const userAssessments = assessments.filter(a => a.studentId === studentId);
+    const latest = userAssessments.length > 0 ? userAssessments[0] : null;
 
     return {
       student: {
         id: studentUser.id,
-        name: studentUser.name || 'Student',
+        name: studentUser.name,
         email: studentUser.email,
         course: studentUser.course || 'MCA Computer Applications',
         academic_year: studentUser.academicYear || 'Year 2'
@@ -607,7 +583,7 @@ async function handleLocalFallback<T>(endpoint: string, options: RequestInit = {
 }
 
 // ---------------------------------------------------------------------------
-// Main Request Dispatcher (With Zero-404 Vercel Optimization)
+// Main Request Dispatcher
 // ---------------------------------------------------------------------------
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const token = getStoredToken();
@@ -676,7 +652,6 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
         errorMsg = `${response.status} ${response.statusText}`;
       }
 
-      // If login or registration returned error from server on Vercel, try local fallback
       if (endpoint.startsWith('/auth/login') || endpoint.startsWith('/auth/register')) {
         try {
           return await handleLocalFallback<T>(endpoint, options);
@@ -790,34 +765,29 @@ export const api = {
       })
     }),
 
-  getMyCounsellingRequests: () =>
-    request<{ requests: any[] }>('/counselling/student/requests'),
+  getCounsellingRequests: () => request<{ requests: any[] }>('/counselling/requests'),
 
-  getAnonymousSession: (type: 'audio' | 'video' | 'chat') =>
-    request<any>('/counselling/anonymous/session', {
-      method: 'POST',
-      body: JSON.stringify({ sessionType: type })
-    }),
-
-  createAnonymousSession: (type: string = 'video') =>
-    request<any>('/counselling/anonymous/session', {
-      method: 'POST',
-      body: JSON.stringify({ sessionType: type })
-    }),
-
-  leaveAnonymousSession: (sessionId: string) =>
-    request<any>(`/counselling/anonymous/session/${sessionId}/leave`, {
+  // Anonymous WebRTC Session
+  createAnonymousSession: () =>
+    request<{
+      sessionId: string;
+      guestId: string;
+      guestAlias: string;
+      guestToken: string;
+      sessionType: string;
+      status: string;
+      counsellorOnline: boolean;
+      counsellorName?: string;
+      createdAt: string;
+    }>('/anonymous-counselling/session', {
       method: 'POST'
     }),
 
   // Counsellor
-  getCounsellorDashboard: () => request<any>('/counsellor/dashboard'),
-  getWaitingSessions: () => request<{ sessions: any[] }>('/counsellor/sessions/waiting'),
-  getCounsellorRequests: () => request<{ requests: any[] }>('/counsellor/requests'),
-  toggleCounsellorAvailability: () => request<any>('/counsellor/availability', { method: 'POST' }),
+  getCounsellorProfile: () => request<{ profile: any }>('/counsellor/profile'),
   updateCounsellorAvailability: (isAvailable: boolean) =>
-    request<{ isAvailable: boolean }>('/counsellor/availability', {
-      method: 'POST',
+    request<{ message: string; isAvailable: boolean }>('/counsellor/availability', {
+      method: 'PATCH',
       body: JSON.stringify({ isAvailable })
     }),
   acceptSession: (sessionId: string) => request<any>(`/counsellor/session/${sessionId}/accept`, { method: 'POST' }),

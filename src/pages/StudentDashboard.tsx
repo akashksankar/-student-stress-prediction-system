@@ -6,19 +6,11 @@ import {
   Activity,
   HeartHandshake,
   ArrowRight,
-  Flame,
   AlertTriangle,
   FileText,
-  Calendar,
-  Sparkles,
-  ShieldAlert,
   BarChart3,
   Layers,
-  CheckCircle2,
-  PieChart,
-  TrendingDown,
-  TrendingUp,
-  Minus
+  Sparkles
 } from 'lucide-react';
 import { OptionDistribution, DomainScore } from '../types';
 
@@ -109,7 +101,7 @@ export const StudentDashboard: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-[calc(100vh-5rem)] bg-[#0B0C0E] py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-[calc(100vh-4rem)] bg-[#0B0C0E] py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto space-y-6">
           <div className="h-32 bg-[#111216] border border-white/10 rounded-2xl animate-pulse" />
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -123,9 +115,9 @@ export const StudentDashboard: React.FC = () => {
     );
   }
 
-  if (error) {
+  if (error && !dashboardData) {
     return (
-      <div className="min-h-[calc(100vh-5rem)] bg-[#0B0C0E] py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-[calc(100vh-4rem)] bg-[#0B0C0E] py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-3xl mx-auto p-6 bg-[#111216] border border-[#E50914]/40 rounded-2xl text-xs font-mono space-y-4">
           <div className="flex items-center gap-2.5 text-white font-['Outfit'] text-base font-semibold">
             <AlertTriangle className="w-5 h-5 text-[#E50914]" />
@@ -143,30 +135,29 @@ export const StudentDashboard: React.FC = () => {
     );
   }
 
-  const { student, latestAssessment, latestRecommendations, history, totalAssessments, counsellingRequests } = dashboardData;
-
+  const { student, latestAssessment, latestRecommendations, history, totalAssessments } = dashboardData || {};
   const optionDist = latestAssessment ? deriveOptionDistribution(latestAssessment) : null;
   const domainBreakdown = latestAssessment ? deriveDomainBreakdown(latestAssessment) : [];
 
   return (
-    <div className="min-h-[calc(100vh-5rem)] bg-[#0B0C0E] text-[#EDEDED] relative overflow-hidden py-8">
+    <div className="min-h-[calc(100vh-4rem)] bg-[#0B0C0E] text-[#EDEDED] relative overflow-hidden py-8">
       {/* Background radial crimson glow */}
       <div className="absolute top-20 right-1/4 w-[600px] h-[500px] bg-[#E50914]/[0.05] rounded-full blur-[140px] pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 relative z-10">
         
-        {/* Welcome Banner — Editorial Poster Style */}
+        {/* Welcome Banner */}
         <div className="bg-[#111216] border border-white/10 rounded-2xl p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 relative shadow-2xl hover:border-[#E50914]/30 transition-all">
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-3">
               <span className="w-4 h-[2px] bg-[#E50914]" />
               <span className="text-[11px] font-mono uppercase tracking-[0.25em] text-[#A1A1AA]">
-                DOSSIER · STD-{(student?.id || 1).toString().padStart(4, '0')}
+                DOSSIER · STD-{(student?.id || user?.id || 1).toString().padStart(4, '0')}
               </span>
               <span className="text-white/20">|</span>
-              <span className="text-xs text-[#8E8E93] font-mono">{student?.course || 'MCA Computer Applications'}</span>
+              <span className="text-xs text-[#8E8E93] font-mono">{student?.course || user?.course || 'MCA Computer Applications'}</span>
               <span className="text-white/20">|</span>
-              <span className="text-xs text-[#8E8E93] font-mono">{student?.academic_year || 'Year 2'}</span>
+              <span className="text-xs text-[#8E8E93] font-mono">{student?.academic_year || user?.academicYear || 'Year 1'}</span>
             </div>
 
             <h1 className="font-['Outfit'] text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
@@ -190,7 +181,7 @@ export const StudentDashboard: React.FC = () => {
               </div>
             </Link>
             <Link
-              to="/counsellor"
+              to="/anonymous-counselling"
               className="inline-flex items-center gap-2 px-5 py-3.5 bg-[#17181F] hover:bg-[#1f2029] text-white border border-white/10 hover:border-white/20 rounded-full text-xs font-medium uppercase tracking-wider transition-all"
             >
               <HeartHandshake className="w-4 h-4 text-[#E50914]" />
@@ -231,7 +222,7 @@ export const StudentDashboard: React.FC = () => {
             {/* Top 4 Quantitative Metrics Strip */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               
-              {/* Metric 1: Stress Classification */}
+              {/* Metric 1: Classification */}
               <div className="bg-[#111216] border border-white/10 rounded-2xl p-5 relative overflow-hidden transition-all hover:border-[#E50914]/40 shadow-xl">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-mono uppercase tracking-[0.2em] text-[#A1A1AA]">
@@ -302,7 +293,7 @@ export const StudentDashboard: React.FC = () => {
                   Screening Timeline
                 </span>
                 <div className="mt-3 font-['Outfit'] text-2xl font-bold text-white">
-                  {totalAssessments || history?.length || 1} {(totalAssessments === 1 || history?.length === 1) ? 'Record' : 'Records'}
+                  {totalAssessments || history?.length || 1} Record(s)
                 </div>
                 <Link to="/history" className="text-[11px] font-mono text-[#E50914] uppercase tracking-wider hover:underline mt-2 inline-flex items-center gap-1">
                   <span>View Historical Archive</span>
@@ -416,17 +407,17 @@ export const StudentDashboard: React.FC = () => {
                     <div
                       className="bg-[#E50914] h-full transition-all duration-500"
                       style={{ width: `${optionDist.yesPercentage}%` }}
-                      title={`Yes (High Triggers): ${optionDist.yesCount}`}
+                      title={`Yes: ${optionDist.yesCount}`}
                     />
                     <div
                       className="bg-amber-500 h-full transition-all duration-500"
                       style={{ width: `${optionDist.sometimesPercentage}%` }}
-                      title={`Sometimes (Moderate): ${optionDist.sometimesCount}`}
+                      title={`Sometimes: ${optionDist.sometimesCount}`}
                     />
                     <div
                       className="bg-emerald-500 h-full transition-all duration-500"
                       style={{ width: `${optionDist.noPercentage}%` }}
-                      title={`No (Protective): ${optionDist.noCount}`}
+                      title={`No: ${optionDist.noCount}`}
                     />
                   </div>
                   <div className="flex items-center gap-4 text-[11px] font-mono text-[#8E8E93] pt-1">
@@ -447,58 +438,38 @@ export const StudentDashboard: React.FC = () => {
               </div>
             )}
 
-            {/* CATEGORICAL SUB-DOMAIN BREAKDOWN */}
+            {/* Categorical Domain Breakdown */}
             {domainBreakdown.length > 0 && (
               <div className="bg-[#111216] border border-white/10 rounded-2xl p-6 sm:p-8 space-y-6 shadow-2xl">
-                <div className="flex items-center justify-between pb-4 border-b border-white/10">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <Layers className="w-4 h-4 text-[#E50914]" />
-                      <span className="text-[11px] font-mono uppercase tracking-[0.2em] text-[#A1A1AA]">
-                        DOMAIN VULNERABILITY RADAR
-                      </span>
-                    </div>
-                    <h2 className="font-['Outfit'] text-2xl font-bold text-white">
-                      Diagnostic Sub-Scale Strain Breakdown
-                    </h2>
-                  </div>
-                  <span className="text-xs font-mono text-[#8E8E93]">
-                    Categorical Weights
-                  </span>
+                <div className="border-b border-white/10 pb-4">
+                  <h2 className="font-['Outfit'] text-2xl font-bold text-white">
+                    Diagnostic Sub-Domain Scores
+                  </h2>
+                  <p className="font-mono text-xs text-[#8E8E93]">
+                    Evaluated across five psychiatric and workload assessment categories.
+                  </p>
                 </div>
 
                 <div className="space-y-4">
-                  {domainBreakdown.map((item, idx) => (
-                    <div key={idx} className="p-4 bg-[#17181F] border border-white/5 rounded-xl space-y-2 hover:border-white/15 transition-all">
-                      <div className="flex items-center justify-between text-xs">
-                        <div className="flex items-center gap-2.5">
-                          <span className="w-5 h-5 rounded-full bg-white/5 border border-white/10 text-white font-mono text-[10px] flex items-center justify-center font-bold">
-                            0{idx + 1}
-                          </span>
-                          <span className="font-['Outfit'] font-semibold text-white text-sm">
-                            {item.domain}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-3 font-mono text-xs">
-                          <span className="text-[#8E8E93]">{item.score} / {item.maxScore} Pts</span>
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider ${
-                            item.severity === 'High'
-                              ? 'bg-[#E50914]/20 text-[#E50914] border border-[#E50914]/40'
-                              : item.severity === 'Moderate'
-                              ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40'
-                              : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
+                  {domainBreakdown.map((d, idx) => (
+                    <div key={idx} className="space-y-1.5 font-mono text-xs">
+                      <div className="flex items-center justify-between">
+                        <span className="text-white font-medium">{d.domain}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[#8E8E93]">{d.score} / {d.maxScore} Pts</span>
+                          <span className={`px-2 py-0.5 rounded text-[10px] uppercase ${
+                            d.severity === 'High' ? 'bg-[#E50914]/20 text-[#E50914]' : d.severity === 'Moderate' ? 'bg-amber-500/20 text-amber-400' : 'bg-emerald-500/20 text-emerald-400'
                           }`}>
-                            {item.severity} ({item.percentage}%)
+                            {d.severity}
                           </span>
                         </div>
                       </div>
-
-                      <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden">
+                      <div className="w-full bg-[#17181F] h-2 rounded-full overflow-hidden">
                         <div
                           className={`h-full rounded-full transition-all duration-500 ${
-                            item.severity === 'High' ? 'bg-[#E50914]' : item.severity === 'Moderate' ? 'bg-amber-500' : 'bg-emerald-500'
+                            d.severity === 'High' ? 'bg-[#E50914]' : d.severity === 'Moderate' ? 'bg-amber-500' : 'bg-emerald-500'
                           }`}
-                          style={{ width: `${item.percentage}%` }}
+                          style={{ width: `${d.percentage}%` }}
                         />
                       </div>
                     </div>
@@ -507,194 +478,22 @@ export const StudentDashboard: React.FC = () => {
               </div>
             )}
 
-            {/* Two-Column Layout: Contributing Factors & Recommendations */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-              
-              {/* Left: Contributing Factors Briefing */}
-              <div className="lg:col-span-7 bg-[#111216] border border-white/10 rounded-2xl p-6 sm:p-7 space-y-6 shadow-xl">
-                <div className="flex items-center justify-between pb-4 border-b border-white/10">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="w-3 h-[2px] bg-[#E50914]" />
-                      <h2 className="font-['Outfit'] text-xl font-bold text-white">
-                        Detected Primary Contributing Factors
-                      </h2>
-                    </div>
-                    <p className="font-mono text-xs text-[#8E8E93]">
-                      Ranked from affirmative ("Yes" & "Sometimes") diagnostic responses.
-                    </p>
-                  </div>
-                  <Link
-                    to={`/results/${latestAssessment.id}`}
-                    className="text-xs font-mono text-[#E50914] uppercase tracking-wider hover:underline flex items-center gap-1"
-                  >
-                    <span>Full Result</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
-                </div>
-
-                <div className="space-y-2.5">
-                  {latestAssessment.contributingFactors?.length > 0 ? (
-                    latestAssessment.contributingFactors.map((f: string, i: number) => (
-                      <div
-                        key={i}
-                        className="p-3.5 bg-[#17181F] border border-white/5 rounded-xl flex items-center justify-between text-xs hover:border-white/15 transition-all"
-                      >
-                        <div className="flex items-center gap-3">
-                          <span className="w-6 h-6 rounded-full bg-[#E50914]/15 border border-[#E50914]/40 text-[#E50914] font-mono text-[11px] flex items-center justify-center font-bold">
-                            0{i + 1}
-                          </span>
-                          <span className="font-medium text-white tracking-wide">
-                            {f}
-                          </span>
-                        </div>
-                        <span className="font-mono text-[10px] text-[#E50914] uppercase tracking-wider font-semibold">
-                          Affirmative Trigger
-                        </span>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="p-4 bg-[#17181F] rounded-xl text-xs text-[#8E8E93] text-center font-mono">
-                      No acute contributing factors detected in this screening session.
-                    </div>
-                  )}
-                </div>
-
-                {/* High stress alert banner */}
-                {latestAssessment.stressLevel === 'High' && (
-                  <div className="p-5 bg-[#E50914]/10 border border-[#E50914]/40 rounded-xl text-white space-y-3">
-                    <div className="flex items-center gap-2.5 text-sm font-['Outfit'] font-bold text-white">
-                      <ShieldAlert className="w-5 h-5 text-[#E50914] shrink-0" />
-                      <span>Elevated Stress Threshold Reached (Score {latestAssessment.totalScore} / 40)</span>
-                    </div>
-                    <p className="text-xs text-[#9E9EA4] leading-relaxed font-light">
-                      A confidential alert has been registered for campus mental health support. Your individual questionnaire selections remain confidential and encrypted.
-                    </p>
-                    <div className="pt-1 flex flex-wrap gap-3">
-                      <Link
-                        to="/counsellor"
-                        className="px-4 py-2 bg-[#E50914] hover:bg-[#c20811] text-white rounded-full text-xs font-semibold uppercase tracking-wider transition-all"
-                      >
-                        Submit Case Review
-                      </Link>
-                      <Link
-                        to="/anonymous-counselling"
-                        className="px-4 py-2 bg-[#17181F] hover:bg-[#1f2029] text-white border border-white/10 rounded-full text-xs font-semibold uppercase tracking-wider transition-all"
-                      >
-                        Open Anonymous Room
-                      </Link>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Right: Personalized Guidance */}
-              <div className="lg:col-span-5 bg-[#111216] border border-white/10 rounded-2xl p-6 sm:p-7 space-y-5 shadow-xl">
-                <div className="flex items-center justify-between pb-4 border-b border-white/10">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="w-3 h-[2px] bg-[#E50914]" />
-                      <h2 className="font-['Outfit'] text-xl font-bold text-white">
-                        Targeted Guidance
-                      </h2>
-                    </div>
-                    <p className="font-mono text-xs text-[#8E8E93]">
-                      Action plan for {latestAssessment.stressLevel} stress.
-                    </p>
-                  </div>
-                  <Link
-                    to="/recommendations"
-                    className="text-xs font-mono text-[#E50914] uppercase tracking-wider hover:underline"
-                  >
-                    All Guidance &rarr;
-                  </Link>
-                </div>
-
-                <div className="space-y-3">
-                  {latestRecommendations?.slice(0, 4).map((rec: any, idx: number) => (
-                    <div key={idx} className="p-4 bg-[#17181F] border border-white/5 rounded-xl text-xs space-y-1.5 hover:border-white/15 transition-all">
-                      <div className="flex items-center justify-between">
-                        <span className="font-mono text-[10px] uppercase tracking-wider text-[#E50914] font-semibold">
-                          {rec.category}
-                        </span>
-                        <span className="font-mono text-[10px] text-[#71717A]">
-                          LEVEL: {rec.stress_level || latestAssessment.stressLevel}
-                        </span>
-                      </div>
-                      <p className="text-xs text-[#EDEDED] leading-relaxed font-light">
-                        {rec.suggestion}
-                      </p>
+            {/* Recommendations */}
+            {latestRecommendations && latestRecommendations.length > 0 && (
+              <div className="bg-[#111216] border border-white/10 rounded-2xl p-6 sm:p-8 space-y-4 shadow-2xl">
+                <h2 className="font-['Outfit'] text-xl font-bold text-white">
+                  Targeted Clinical Guidance
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {latestRecommendations.map((rec: any, idx: number) => (
+                    <div key={idx} className="p-4 bg-[#17181F] border border-white/5 rounded-xl space-y-1 text-xs">
+                      <span className="font-mono text-[10px] uppercase text-[#E50914] font-semibold">{rec.category}</span>
+                      <p className="text-[#9E9EA4] leading-relaxed font-light">{rec.suggestion}</p>
                     </div>
                   ))}
                 </div>
               </div>
-
-            </div>
-
-            {/* Assessment History Table */}
-            <div className="bg-[#111216] border border-white/10 rounded-2xl p-6 sm:p-7 space-y-4 shadow-xl">
-              <div className="flex items-center justify-between pb-4 border-b border-white/10">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="w-3 h-[2px] bg-[#E50914]" />
-                    <h2 className="font-['Outfit'] text-xl font-bold text-white">
-                      Screening History & Trajectory
-                    </h2>
-                  </div>
-                  <p className="font-mono text-xs text-[#8E8E93]">
-                    Verified database records of past 20-item diagnostic matrix submissions.
-                  </p>
-                </div>
-                <Link to="/history" className="text-xs font-mono text-[#E50914] uppercase tracking-wider hover:underline">
-                  Full Archive &rarr;
-                </Link>
-              </div>
-
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs border-collapse">
-                  <thead>
-                    <tr className="border-b border-white/10 text-[11px] font-mono uppercase tracking-wider text-[#A1A1AA]">
-                      <th className="py-3 px-4">Date</th>
-                      <th className="py-3 px-4">Focus Domain</th>
-                      <th className="py-3 px-4 text-center">Score</th>
-                      <th className="py-3 px-4">Classification</th>
-                      <th className="py-3 px-4 text-right">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-white/5">
-                    {(history || [latestAssessment]).map((h: any) => (
-                      <tr key={h.id} className="hover:bg-white/[0.02] transition-colors">
-                        <td className="py-3.5 px-4 font-mono text-[#8E8E93]">
-                          {new Date(h.completedAt).toLocaleDateString()}
-                        </td>
-                        <td className="py-3.5 px-4 text-white font-medium">
-                          {h.stressArea}
-                        </td>
-                        <td className="py-3.5 px-4 text-center font-mono font-bold text-[#E50914]">
-                          {h.totalScore} / 40
-                        </td>
-                        <td className="py-3.5 px-4">
-                          <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-mono uppercase tracking-wider ${
-                            h.stressLevel === 'High'
-                              ? 'bg-[#E50914]/15 text-[#E50914] border border-[#E50914]/30'
-                              : h.stressLevel === 'Moderate'
-                              ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
-                              : 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
-                          }`}>
-                            {h.stressLevel}
-                          </span>
-                        </td>
-                        <td className="py-3.5 px-4 text-right">
-                          <Link to={`/results/${h.id}`} className="text-xs font-mono text-[#E50914] hover:underline">
-                            View Dossier &rarr;
-                          </Link>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+            )}
 
           </div>
         )}

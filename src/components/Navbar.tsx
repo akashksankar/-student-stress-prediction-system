@@ -1,12 +1,21 @@
 import React from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LogOut, HeartHandshake, ShieldCheck, ArrowRight } from 'lucide-react';
+import {
+  Activity,
+  LogOut,
+  User,
+  ShieldAlert,
+  HeartHandshake,
+  LayoutDashboard,
+  LogIn,
+  UserPlus
+} from 'lucide-react';
 
 export const Navbar: React.FC = () => {
   const { user, logout } = useAuth();
-  const location = useLocation();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = () => {
     logout();
@@ -16,150 +25,89 @@ export const Navbar: React.FC = () => {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <header className="sticky top-0 z-50 bg-[#0B0C0E]/90 backdrop-blur-xl border-b border-white/[0.08] text-[#EDEDED]">
+    <nav className="bg-[#111216]/90 backdrop-blur-md border-b border-white/10 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20 gap-8">
+        <div className="flex items-center justify-between h-16">
           
-          {/* Brand Wordmark (Inspired by "CL." and "Darnit2" in the reference concepts) */}
-          <Link
-            to={user ? (user.role === 'admin' ? '/admin' : user.role === 'counsellor' ? '/counsellor/console' : '/dashboard') : '/'}
-            className="flex items-center gap-3 group focus:outline-none shrink-0"
-          >
-            <div className="flex items-center">
-              <span className="font-['Outfit'] font-black text-2xl tracking-tighter text-white">
-                SP
-              </span>
-              <span className="text-[#E50914] font-black text-2xl font-['Outfit'] leading-none">.</span>
+          {/* Brand Logo */}
+          <Link to="/" className="flex items-center gap-3 group">
+            <div className="w-9 h-9 rounded-xl bg-[#E50914] flex items-center justify-center text-white font-['Outfit'] font-bold text-lg shadow-lg group-hover:scale-105 transition-transform">
+              SP
             </div>
-            <span className="hidden sm:inline-block font-mono text-[11px] uppercase tracking-[0.25em] text-[#8E8E93] border-l border-white/10 pl-3">
-              WELLBEING SYSTEM
-            </span>
+            <div className="flex flex-col">
+              <span className="font-['Outfit'] font-bold text-base text-white tracking-tight flex items-center gap-1.5">
+                StressPredict <span className="text-[#E50914] text-xs font-mono font-medium px-1.5 py-0.5 rounded bg-[#E50914]/15 border border-[#E50914]/30">MCA</span>
+              </span>
+              <span className="text-[10px] font-mono text-[#8E8E93] uppercase tracking-wider">
+                Intelligence Matrix
+              </span>
+            </div>
           </Link>
 
-          {/* Minimalist Navigation Links (Exact reference inspiration: wide tracking uppercase) */}
-          <nav className="hidden md:flex items-center gap-8 text-[11px] font-semibold tracking-[0.2em] uppercase text-[#9E9EA4]">
-            {user?.role === 'student' && (
-              <>
-                <Link
-                  to="/dashboard"
-                  className={`transition-colors hover:text-white ${isActive('/dashboard') ? 'text-white border-b border-[#E50914] pb-1' : ''}`}
-                >
-                  Dashboard
-                </Link>
-                <Link
-                  to="/assessment"
-                  className={`transition-colors hover:text-white ${isActive('/assessment') ? 'text-white border-b border-[#E50914] pb-1' : ''}`}
-                >
-                  Assessment
-                </Link>
-                <Link
-                  to="/history"
-                  className={`transition-colors hover:text-white ${isActive('/history') ? 'text-white border-b border-[#E50914] pb-1' : ''}`}
-                >
-                  History
-                </Link>
-                <Link
-                  to="/recommendations"
-                  className={`transition-colors hover:text-white ${isActive('/recommendations') ? 'text-white border-b border-[#E50914] pb-1' : ''}`}
-                >
-                  Guidance
-                </Link>
-                <Link
-                  to="/counsellor"
-                  className={`transition-colors hover:text-white ${isActive('/counsellor') ? 'text-white border-b border-[#E50914] pb-1' : ''}`}
-                >
-                  Counsellor
-                </Link>
-              </>
-            )}
+          {/* Nav Links */}
+          <div className="hidden md:flex items-center gap-1">
+            <Link
+              to="/assessment"
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-mono uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+                isActive('/assessment') ? 'bg-[#E50914] text-white shadow-sm' : 'text-[#8E8E93] hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <Activity className="w-3.5 h-3.5" />
+              <span>Assessment</span>
+            </Link>
 
-            {user?.role === 'admin' && (
-              <>
-                <Link
-                  to="/admin"
-                  className={`transition-colors hover:text-white ${isActive('/admin') ? 'text-white border-b border-[#E50914] pb-1' : ''}`}
-                >
-                  Overview
-                </Link>
-                <Link to="/admin?tab=students" className="transition-colors hover:text-white">
-                  Roster
-                </Link>
-                <Link to="/admin?tab=questions" className="transition-colors hover:text-white">
-                  Question Bank
-                </Link>
-                <Link to="/admin?tab=counselling" className="transition-colors hover:text-white">
-                  Cases
-                </Link>
-                <Link to="/admin?tab=reports" className="transition-colors hover:text-white">
-                  Reports
-                </Link>
-              </>
-            )}
+            <Link
+              to="/anonymous-counselling"
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-mono uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+                isActive('/anonymous-counselling') ? 'bg-[#E50914] text-white shadow-sm' : 'text-[#8E8E93] hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <HeartHandshake className="w-3.5 h-3.5" />
+              <span>Anonymous Support</span>
+            </Link>
 
-            {user?.role === 'counsellor' && (
-              <>
-                <Link
-                  to="/counsellor/console"
-                  className={`transition-colors hover:text-white ${isActive('/counsellor/console') ? 'text-white border-b border-[#E50914] pb-1' : ''}`}
-                >
-                  Console
-                </Link>
-                <Link to="/counsellor/console?tab=queue" className="transition-colors hover:text-white">
-                  Anonymous Queue
-                </Link>
-                <Link to="/counsellor/console?tab=requests" className="transition-colors hover:text-white">
-                  Student Reports
-                </Link>
-              </>
+            {user && (
+              <Link
+                to={user.role === 'admin' ? '/admin' : user.role === 'counsellor' ? '/counsellor' : '/dashboard'}
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-mono uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+                  isActive('/dashboard') || isActive('/admin') || isActive('/counsellor')
+                    ? 'bg-[#E50914] text-white shadow-sm'
+                    : 'text-[#8E8E93] hover:text-white hover:bg-white/5'
+                }`}
+              >
+                <LayoutDashboard className="w-3.5 h-3.5" />
+                <span>Dashboard</span>
+              </Link>
             )}
+          </div>
 
-            {!user && (
-              <>
-                <Link to="/" className={`transition-colors hover:text-white ${isActive('/') ? 'text-white border-b border-[#E50914] pb-1' : ''}`}>
-                  Overview
-                </Link>
-                <Link
-                  to="/anonymous-counselling"
-                  className="transition-colors text-[#EDEDED] flex items-center gap-1.5 hover:text-[#E50914]"
-                >
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#E50914]" />
-                  <span>Anonymous WebRTC</span>
-                </Link>
-              </>
-            )}
-          </nav>
-
-          {/* User Account / Session Actions */}
-          <div className="flex items-center gap-4 shrink-0">
+          {/* Right Action Profile / Auth */}
+          <div className="flex items-center gap-3">
             {user ? (
               <div className="flex items-center gap-3">
                 <div className="hidden sm:flex flex-col text-right">
-                  <span className="font-semibold text-xs text-white tracking-wide truncate max-w-[140px]">
-                    {user.fullName}
-                  </span>
-                  <span className="font-mono text-[10px] text-[#E50914] uppercase tracking-wider">
-                    {user.role}
-                  </span>
+                  <span className="text-xs font-medium text-white">{user.fullName}</span>
+                  <span className="text-[10px] font-mono text-[#E50914] uppercase">{user.role}</span>
                 </div>
                 <button
                   onClick={handleLogout}
-                  className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-medium text-[#9E9EA4] border border-white/10 rounded-full hover:border-[#E50914] hover:text-white transition-all cursor-pointer"
+                  className="p-2 rounded-lg bg-white/5 hover:bg-[#E50914]/20 text-[#8E8E93] hover:text-[#E50914] border border-white/10 transition-all cursor-pointer"
+                  title="Sign out"
                 >
-                  <LogOut className="w-3.5 h-3.5" />
-                  <span>Logout</span>
+                  <LogOut className="w-4 h-4" />
                 </button>
               </div>
             ) : (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 <Link
                   to="/login"
-                  className="px-4 py-2 text-xs font-semibold tracking-wider uppercase text-[#9E9EA4] hover:text-white transition-colors"
+                  className="px-4 py-2 text-xs font-mono uppercase tracking-wider text-[#8E8E93] hover:text-white transition-colors"
                 >
                   Sign In
                 </Link>
                 <Link
                   to="/register"
-                  className="px-5 py-2 text-xs font-semibold tracking-wider uppercase text-white bg-[#E50914] rounded-full hover:bg-[#c20811] transition-all shadow-sm"
+                  className="px-4 py-2 bg-[#E50914] hover:bg-[#c20811] text-white rounded-lg text-xs font-mono uppercase tracking-wider transition-all shadow-md"
                 >
                   Register
                 </Link>
@@ -169,6 +117,6 @@ export const Navbar: React.FC = () => {
 
         </div>
       </div>
-    </header>
+    </nav>
   );
 };
