@@ -1,0 +1,11 @@
+{
+  "name": "Student Stress Prediction System",
+  "description": "Production-quality student stress assessment and prediction platform with questionnaire scoring, personalized recommendations, counselling support, anonymous WebRTC sessions, and administrative analytics.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
