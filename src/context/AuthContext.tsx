@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User } from '../types';
-import { api, getStoredToken, setStoredToken } from '../services/api';
+import { api, getStoredToken, setStoredToken, getStoredUser, setStoredUser } from '../services/api';
 
 interface AuthContextType {
   user: User | null;
@@ -15,13 +15,14 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(() => getStoredUser());
   const [loading, setLoading] = useState<boolean>(true);
 
   const refreshUser = async () => {
     const token = getStoredToken();
     if (!token) {
       setUser(null);
+      setStoredUser(null);
       setLoading(false);
       return;
     }
@@ -29,10 +30,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const res = await api.getCurrentUser();
       setUser(res.user);
+      setStoredUser(res.user);
     } catch (err) {
-      console.warn('Session verification failed, clearing token:', err);
-      setStoredToken(null);
-      setUser(null);
+      console.warn('Session verification fallback to cached profile:', err);
+      const cached = getStoredUser();
+      if (cached) {
+        setUser(cached);
+      } else {
+        setStoredToken(null);
+        setStoredUser(null);
+        setUser(null);
+      }
     } finally {
       setLoading(false);
     }
@@ -45,17 +53,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, pass: string) => {
     const res = await api.login({ email, password: pass });
     setStoredToken(res.token);
+    setStoredUser(res.user);
     setUser(res.user);
   };
 
   const register = async (data: any) => {
     const res = await api.register(data);
     setStoredToken(res.token);
+    setStoredUser(res.user);
     setUser(res.user);
   };
 
   const logout = () => {
     setStoredToken(null);
+    setStoredUser(null);
     setUser(null);
   };
 

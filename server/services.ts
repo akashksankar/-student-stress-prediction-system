@@ -68,6 +68,14 @@ export interface AssessmentCalculationResult {
   contributingFactors: string[];
   recommendationIds: number[];
   recommendationSuggestions: Array<{ id: number; category: string; suggestion: string }>;
+  optionDistribution: {
+    yesCount: number;
+    sometimesCount: number;
+    noCount: number;
+    yesPercentage: number;
+    sometimesPercentage: number;
+    noPercentage: number;
+  };
 }
 
 export async function calculateStressAssessment(
@@ -89,6 +97,9 @@ export async function calculateStressAssessment(
   });
 
   let totalScore = 0;
+  let yesCount = 0;
+  let sometimesCount = 0;
+  let noCount = 0;
   const highImpactCategories: { [cat: string]: number } = {};
 
   for (const ans of answers) {
@@ -96,10 +107,13 @@ export async function calculateStressAssessment(
     let itemScore = 0;
     if (ans.answer === 'Yes') {
       itemScore = 2;
+      yesCount++;
     } else if (ans.answer === 'Sometimes') {
       itemScore = 1;
+      sometimesCount++;
     } else if (ans.answer === 'No') {
       itemScore = 0;
+      noCount++;
     } else {
       throw new Error(`Invalid answer value '${ans.answer}'. Must be Yes, Sometimes, or No.`);
     }
@@ -154,6 +168,14 @@ export async function calculateStressAssessment(
     stressLevel,
     contributingFactors,
     recommendationIds,
-    recommendationSuggestions
+    recommendationSuggestions,
+    optionDistribution: {
+      yesCount,
+      sometimesCount,
+      noCount,
+      yesPercentage: Math.round((yesCount / 20) * 100),
+      sometimesPercentage: Math.round((sometimesCount / 20) * 100),
+      noPercentage: Math.round((noCount / 20) * 100)
+    }
   };
 }

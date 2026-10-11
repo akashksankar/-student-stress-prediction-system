@@ -34,6 +34,23 @@ export interface Question {
   weight: number;
 }
 
+export interface OptionDistribution {
+  yesCount: number;
+  sometimesCount: number;
+  noCount: number;
+  yesPercentage: number;
+  sometimesPercentage: number;
+  noPercentage: number;
+}
+
+export interface DomainScore {
+  domain: string;
+  score: number;
+  maxScore: number;
+  percentage: number;
+  severity: 'Low' | 'Moderate' | 'High';
+}
+
 export interface AssessmentResult {
   id: number;
   studentId: number;
@@ -45,6 +62,8 @@ export interface AssessmentResult {
   stressLevel: StressLevel;
   completedAt: string;
   contributingFactors: string[];
+  optionDistribution?: OptionDistribution;
+  domainBreakdown?: DomainScore[];
   recommendations: Array<{
     id: number;
     category: string;

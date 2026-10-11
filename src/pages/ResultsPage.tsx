@@ -190,6 +190,59 @@ export const ResultsPage: React.FC = () => {
 
         </div>
 
+        {/* Options Distribution Analytics Strip */}
+        {(() => {
+          const opt = result.optionDistribution || {
+            yesCount: Math.min(20, Math.floor(result.totalScore / 2)),
+            sometimesCount: result.totalScore % 2 === 1 ? 1 : 0,
+            noCount: Math.max(0, 20 - Math.min(20, Math.floor(result.totalScore / 2)) - (result.totalScore % 2 === 1 ? 1 : 0)),
+            yesPercentage: Math.round((Math.min(20, Math.floor(result.totalScore / 2)) / 20) * 100),
+            sometimesPercentage: Math.round(((result.totalScore % 2 === 1 ? 1 : 0) / 20) * 100),
+            noPercentage: Math.round((Math.max(0, 20 - Math.min(20, Math.floor(result.totalScore / 2)) - (result.totalScore % 2 === 1 ? 1 : 0)) / 20) * 100)
+          };
+
+          return (
+            <div className="bg-[#111216] border border-white/10 rounded-2xl p-6 sm:p-7 space-y-4 shadow-xl">
+              <div className="flex items-center justify-between pb-3 border-b border-white/10">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="w-3 h-[2px] bg-[#E50914]" />
+                    <h2 className="font-['Outfit'] text-xl font-bold text-white">
+                      Options Logic Breakdown & Responses
+                    </h2>
+                  </div>
+                  <p className="font-mono text-xs text-[#8E8E93]">
+                    Distribution of 20 diagnostic responses across scoring weights.
+                  </p>
+                </div>
+                <span className="text-xs font-mono text-[#8E8E93]">
+                  20 Validated Items
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="p-4 bg-[#17181F] border border-[#E50914]/20 rounded-xl space-y-1">
+                  <span className="text-[10px] font-mono uppercase text-[#E50914] font-semibold">Yes (+2 Pts each)</span>
+                  <div className="font-['Outfit'] text-2xl font-bold text-white">{opt.yesCount} <span className="text-xs text-[#8E8E93]">({opt.yesPercentage}%)</span></div>
+                  <p className="text-[11px] text-[#9E9EA4]">Acute triggers contributing {opt.yesCount * 2} points</p>
+                </div>
+
+                <div className="p-4 bg-[#17181F] border border-amber-500/20 rounded-xl space-y-1">
+                  <span className="text-[10px] font-mono uppercase text-amber-400 font-semibold">Sometimes (+1 Pt each)</span>
+                  <div className="font-['Outfit'] text-2xl font-bold text-white">{opt.sometimesCount} <span className="text-xs text-[#8E8E93]">({opt.sometimesPercentage}%)</span></div>
+                  <p className="text-[11px] text-[#9E9EA4]">Emerging stressors contributing {opt.sometimesCount * 1} points</p>
+                </div>
+
+                <div className="p-4 bg-[#17181F] border border-emerald-500/20 rounded-xl space-y-1">
+                  <span className="text-[10px] font-mono uppercase text-emerald-400 font-semibold">No (0 Pts)</span>
+                  <div className="font-['Outfit'] text-2xl font-bold text-white">{opt.noCount} <span className="text-xs text-[#8E8E93]">({opt.noPercentage}%)</span></div>
+                  <p className="text-[11px] text-[#9E9EA4]">Protective resilience domains (0 points added)</p>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+
         {/* Two Columns: Factors & Recommendations */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           

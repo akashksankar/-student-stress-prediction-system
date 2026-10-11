@@ -28,6 +28,7 @@ export const AdminDashboardPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   const [showAddQuestion, setShowAddQuestion] = useState(false);
+  const [questionFilterArea, setQuestionFilterArea] = useState<string>('All');
   const [newQText, setNewQText] = useState('');
   const [newQCat, setNewQCat] = useState('Academic Workload');
   const [newQArea, setNewQArea] = useState('College/School');
@@ -398,7 +399,7 @@ export const AdminDashboardPage: React.FC = () => {
                   </h2>
                 </div>
                 <p className="font-mono text-xs text-[#8E8E93]">
-                  20 active items calibrated across Home, College/School, and Both.
+                  60 active items calibrated across Home (20), College/School (20), and Both (20).
                 </p>
               </div>
               <button
@@ -408,6 +409,29 @@ export const AdminDashboardPage: React.FC = () => {
                 <Plus className="w-4 h-4" />
                 <span>Add Question</span>
               </button>
+            </div>
+
+            {/* Domain Filter Pills */}
+            <div className="flex flex-wrap items-center gap-2 font-mono text-xs pt-1">
+              {['All', 'College/School', 'Home', 'Both'].map((area) => {
+                const count = area === 'All'
+                  ? questions.length
+                  : questions.filter(q => (q.stress_area || q.stressArea) === area).length;
+
+                return (
+                  <button
+                    key={area}
+                    onClick={() => setQuestionFilterArea(area)}
+                    className={`px-3.5 py-1.5 rounded-full uppercase tracking-wider text-[11px] font-semibold transition-all cursor-pointer ${
+                      questionFilterArea === area
+                        ? 'bg-[#E50914] text-white shadow-sm'
+                        : 'bg-[#17181F] text-[#8E8E93] border border-white/10 hover:border-white/20'
+                    }`}
+                  >
+                    {area} ({count})
+                  </button>
+                );
+              })}
             </div>
 
             {showAddQuestion && (
@@ -486,30 +510,38 @@ export const AdminDashboardPage: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
-                  {questions.map((q, idx) => (
-                    <tr key={q.id} className="hover:bg-white/[0.02] transition-colors">
-                      <td className="py-3.5 px-4 text-[#E50914] font-mono font-bold">{idx + 1}</td>
-                      <td className="py-3.5 px-4 text-white max-w-md font-medium">{q.question_text}</td>
-                      <td className="py-3.5 px-4 text-[#8E8E93]">{q.category}</td>
-                      <td className="py-3.5 px-4">{q.stress_area}</td>
-                      <td className="py-3.5 px-4 text-center font-mono">{q.weight}</td>
-                      <td className="py-3.5 px-4">
-                        <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-mono uppercase tracking-wider ${
-                          q.is_active ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : 'bg-white/5 text-[#71717A]'
-                        }`}>
-                          {q.is_active ? 'Active' : 'Inactive'}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4 text-right">
-                        <button
-                          onClick={() => handleToggleQuestionActive(q.id, q.is_active)}
-                          className="text-[#E50914] hover:underline font-mono text-xs uppercase"
-                        >
-                          {q.is_active ? 'Deactivate' : 'Activate'}
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                  {questions
+                    .filter(q => questionFilterArea === 'All' || (q.stress_area || q.stressArea) === questionFilterArea)
+                    .map((q, idx) => {
+                      const text = q.question_text || q.questionText;
+                      const area = q.stress_area || q.stressArea;
+                      const active = q.is_active !== undefined ? q.is_active : (q.isActive !== undefined ? q.isActive : true);
+
+                      return (
+                        <tr key={q.id || idx} className="hover:bg-white/[0.02] transition-colors">
+                          <td className="py-3.5 px-4 text-[#E50914] font-mono font-bold">{idx + 1}</td>
+                          <td className="py-3.5 px-4 text-white max-w-md font-medium">{text}</td>
+                          <td className="py-3.5 px-4 text-[#8E8E93]">{q.category}</td>
+                          <td className="py-3.5 px-4">{area}</td>
+                          <td className="py-3.5 px-4 text-center font-mono">{q.weight || 1}</td>
+                          <td className="py-3.5 px-4">
+                            <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-mono uppercase tracking-wider ${
+                              active ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : 'bg-white/5 text-[#71717A]'
+                            }`}>
+                              {active ? 'Active' : 'Inactive'}
+                            </span>
+                          </td>
+                          <td className="py-3.5 px-4 text-right">
+                            <button
+                              onClick={() => handleToggleQuestionActive(q.id, active)}
+                              className="text-[#E50914] hover:underline font-mono text-xs uppercase"
+                            >
+                              {active ? 'Deactivate' : 'Activate'}
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
                 </tbody>
               </table>
             </div>

@@ -10,7 +10,10 @@ import {
   School,
   Home as HomeIcon,
   Layers,
-  Send
+  Send,
+  Zap,
+  Activity,
+  ShieldCheck
 } from 'lucide-react';
 
 export const AssessmentPage: React.FC = () => {
@@ -53,6 +56,20 @@ export const AssessmentPage: React.FC = () => {
   const answeredCount = Object.keys(answers).length;
   const allAnswered = questions.length === 20 && answeredCount === 20;
 
+  // Real-time Options Logic Telemetry
+  const runningScore = Object.values(answers).reduce((acc, ans) => {
+    if (ans === 'Yes') return acc + 2;
+    if (ans === 'Sometimes') return acc + 1;
+    return acc;
+  }, 0);
+
+  const yesCount = Object.values(answers).filter(a => a === 'Yes').length;
+  const sometimesCount = Object.values(answers).filter(a => a === 'Sometimes').length;
+  const noCount = Object.values(answers).filter(a => a === 'No').length;
+
+  const projectedLevel: 'Low' | 'Moderate' | 'High' =
+    runningScore >= 27 ? 'High' : runningScore >= 14 ? 'Moderate' : 'Low';
+
   const handleSubmitAssessment = async () => {
     if (!allAnswered) {
       setError('Please complete all 20 questionnaire items before submission.');
@@ -94,11 +111,15 @@ export const AssessmentPage: React.FC = () => {
               <div className="flex items-center gap-3">
                 <span className="w-4 h-[2px] bg-[#E50914]" />
                 <span className="text-[11px] font-mono uppercase tracking-[0.25em] text-[#A1A1AA]">
-                  DIAGNOSTIC MATRIX
+                  DIAGNOSTIC PROTOCOL
+                </span>
+                <span className="text-white/20">|</span>
+                <span className="text-[11px] font-mono uppercase tracking-wider text-[#E50914]">
+                  20-QUESTION INVENTORY
                 </span>
               </div>
               <h1 className="font-['Outfit'] text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-white">
-                20-Item Stress Screening Protocol
+                Stress Assessment Matrix
               </h1>
             </div>
 
@@ -107,19 +128,19 @@ export const AssessmentPage: React.FC = () => {
               <span className={`px-3 py-1.5 rounded-full uppercase tracking-wider text-[11px] font-medium transition-all ${
                 currentStep === 1 ? 'bg-[#E50914] text-white shadow-sm' : 'bg-white/5 text-[#8E8E93] border border-white/10'
               }`}>
-                01 Area
+                01 Focus Domain
               </span>
               <span className="text-white/20">/</span>
               <span className={`px-3 py-1.5 rounded-full uppercase tracking-wider text-[11px] font-medium transition-all ${
                 currentStep === 2 ? 'bg-[#E50914] text-white shadow-sm' : 'bg-white/5 text-[#8E8E93] border border-white/10'
               }`}>
-                02 Questions
+                02 Questions (20)
               </span>
               <span className="text-white/20">/</span>
               <span className={`px-3 py-1.5 rounded-full uppercase tracking-wider text-[11px] font-medium transition-all ${
                 currentStep === 3 ? 'bg-[#E50914] text-white shadow-sm' : 'bg-white/5 text-[#8E8E93] border border-white/10'
               }`}>
-                03 Submit
+                03 Analytics Review
               </span>
             </div>
           </div>
@@ -137,10 +158,10 @@ export const AssessmentPage: React.FC = () => {
           <div className="bg-[#111216] border border-white/10 rounded-2xl p-6 sm:p-8 space-y-7 shadow-2xl">
             <div className="space-y-1">
               <h2 className="font-['Outfit'] text-2xl font-bold text-white tracking-tight">
-                Select Primary Focus Area
+                Select Screening Focus Domain
               </h2>
               <p className="text-sm text-[#9E9EA4] font-light leading-relaxed">
-                Indicate whether your recent pressure originates mainly from home environments, academic and campus demands, or both. This filters relevant questions alongside universal lifestyle indicators.
+                Choose the primary environment where your pressures originate. Every section contains a dedicated, comprehensive 20-item diagnostic questionnaire designed to calculate your exact stress level and domain triggers.
               </p>
             </div>
 
@@ -159,9 +180,14 @@ export const AssessmentPage: React.FC = () => {
                 <div className="w-10 h-10 rounded-xl bg-[#E50914]/10 border border-[#E50914]/30 text-[#E50914] flex items-center justify-center mb-4">
                   <HomeIcon className="w-5 h-5" />
                 </div>
-                <h3 className="font-['Outfit'] text-lg font-bold text-white">Home Environment</h3>
+                <div className="flex items-center justify-between">
+                  <h3 className="font-['Outfit'] text-lg font-bold text-white">Home Environment</h3>
+                  <span className="font-mono text-[10px] uppercase px-2 py-0.5 rounded bg-white/5 text-[#E50914] border border-[#E50914]/20">
+                    20 Items
+                  </span>
+                </div>
                 <p className="text-xs text-[#9E9EA4] mt-2 leading-relaxed font-light">
-                  Family expectations, study corner disturbances, domestic responsibilities, and routine conflicts.
+                  Family expectations, study space noise, domestic chores, financial worries, and household boundaries.
                 </p>
                 {stressArea === 'Home' && (
                   <div className="mt-4 flex items-center gap-1.5 text-[11px] font-mono text-[#E50914]">
@@ -184,9 +210,14 @@ export const AssessmentPage: React.FC = () => {
                 <div className="w-10 h-10 rounded-xl bg-[#E50914]/10 border border-[#E50914]/30 text-[#E50914] flex items-center justify-center mb-4">
                   <School className="w-5 h-5" />
                 </div>
-                <h3 className="font-['Outfit'] text-lg font-bold text-white">College / Academics</h3>
+                <div className="flex items-center justify-between">
+                  <h3 className="font-['Outfit'] text-lg font-bold text-white">College / Academics</h3>
+                  <span className="font-mono text-[10px] uppercase px-2 py-0.5 rounded bg-white/5 text-[#E50914] border border-[#E50914]/20">
+                    20 Items
+                  </span>
+                </div>
                 <p className="text-xs text-[#9E9EA4] mt-2 leading-relaxed font-light">
-                  Coursework deadlines, examination anxiety, instructor communication, and career prospects.
+                  Continuous evaluation deadlines, exam panic, practical viva, professor communication, and placement stress.
                 </p>
                 {stressArea === 'College/School' && (
                   <div className="mt-4 flex items-center gap-1.5 text-[11px] font-mono text-[#E50914]">
@@ -209,9 +240,14 @@ export const AssessmentPage: React.FC = () => {
                 <div className="w-10 h-10 rounded-xl bg-[#E50914]/10 border border-[#E50914]/30 text-[#E50914] flex items-center justify-center mb-4">
                   <Layers className="w-5 h-5" />
                 </div>
-                <h3 className="font-['Outfit'] text-lg font-bold text-white">Both Domains</h3>
+                <div className="flex items-center justify-between">
+                  <h3 className="font-['Outfit'] text-lg font-bold text-white">Both Domains</h3>
+                  <span className="font-mono text-[10px] uppercase px-2 py-0.5 rounded bg-white/5 text-[#E50914] border border-[#E50914]/20">
+                    20 Items
+                  </span>
+                </div>
                 <p className="text-xs text-[#9E9EA4] mt-2 leading-relaxed font-light">
-                  Combined multidimensional pressures spanning exams, commute, screen time, and home dynamics.
+                  Combined multidimensional matrix: sleep deprivation, physical somatization, commute, and digital burnout.
                 </p>
                 {stressArea === 'Both' && (
                   <div className="mt-4 flex items-center gap-1.5 text-[11px] font-mono text-[#E50914]">
@@ -223,6 +259,14 @@ export const AssessmentPage: React.FC = () => {
 
             </div>
 
+            <div className="p-4 bg-[#14151B] border border-white/5 rounded-xl flex items-center justify-between text-xs font-mono text-[#8E8E93]">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-[#E50914]" />
+                <span>Options Logic: Yes (+2 Pts) · Sometimes (+1 Pt) · No (0 Pts)</span>
+              </div>
+              <span className="text-white">Max Score: 40 Points</span>
+            </div>
+
             <div className="pt-4 border-t border-white/10 flex justify-end">
               <button
                 type="button"
@@ -230,7 +274,7 @@ export const AssessmentPage: React.FC = () => {
                 onClick={handleProceedToQuestions}
                 className="inline-flex items-center gap-3 px-7 py-3.5 bg-[#E50914] hover:bg-[#c20811] text-white rounded-full text-xs font-semibold uppercase tracking-wider transition-all shadow-md group cursor-pointer disabled:opacity-50"
               >
-                <span>{loading ? 'Initializing Question Bank...' : 'Load 20-Item Matrix'}</span>
+                <span>{loading ? 'Initializing Question Matrix...' : `Load 20 ${stressArea} Questions`}</span>
                 <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center group-hover:translate-x-0.5 transition-transform">
                   <ArrowRight className="w-3 h-3 text-white" />
                 </div>
@@ -239,25 +283,56 @@ export const AssessmentPage: React.FC = () => {
           </div>
         )}
 
-        {/* STEP 2: 20 QUESTIONS MATRIX */}
+        {/* STEP 2: 20 QUESTIONS MATRIX & LIVE STRESS TELEMETRY */}
         {currentStep === 2 && questions.length > 0 && (
           <div className="space-y-6">
             
-            {/* Progress bar card */}
-            <div className="bg-[#111216] border border-white/10 rounded-2xl p-5 shadow-xl">
-              <div className="flex items-center justify-between text-xs font-mono mb-2.5">
-                <span className="text-white font-medium">
-                  Item {activeQuestionIndex + 1} of {questions.length}
-                </span>
-                <span className="text-[#E50914] font-semibold">
-                  {answeredCount} / 20 Completed ({Math.round((answeredCount / 20) * 100)}%)
-                </span>
+            {/* Live Telemetry Bar */}
+            <div className="bg-[#111216] border border-white/10 rounded-2xl p-5 shadow-xl space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs font-mono">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-[#E50914] animate-pulse" />
+                  <span className="text-white font-medium">
+                    Question {activeQuestionIndex + 1} of {questions.length}
+                  </span>
+                  <span className="text-white/20">|</span>
+                  <span className="text-[#8E8E93]">{answeredCount} of 20 Answered</span>
+                </div>
+                
+                {/* Real-time Scoring Telemetry */}
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[#71717A]">Projected Score:</span>
+                    <span className="text-white font-bold">{runningScore}/40 Pts</span>
+                  </div>
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider ${
+                    projectedLevel === 'High'
+                      ? 'bg-[#E50914]/20 text-[#E50914] border border-[#E50914]/40'
+                      : projectedLevel === 'Moderate'
+                      ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40'
+                      : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
+                  }`}>
+                    {projectedLevel} Stress
+                  </span>
+                </div>
               </div>
+
+              {/* Progress Bar */}
               <div className="w-full bg-[#17181F] h-2 rounded-full overflow-hidden">
                 <div
                   className="bg-[#E50914] h-full rounded-full transition-all duration-300"
                   style={{ width: `${(answeredCount / 20) * 100}%` }}
                 />
+              </div>
+
+              {/* Options Breakdown Pills */}
+              <div className="flex items-center justify-between text-[11px] font-mono text-[#8E8E93] pt-1">
+                <div className="flex items-center gap-3">
+                  <span className="text-[#E50914]">Yes (Trigger): {yesCount}</span>
+                  <span className="text-amber-400">Sometimes (Stressor): {sometimesCount}</span>
+                  <span className="text-emerald-400">No (Protective): {noCount}</span>
+                </div>
+                <span>Domain: {stressArea}</span>
               </div>
             </div>
 
@@ -269,10 +344,11 @@ export const AssessmentPage: React.FC = () => {
               return (
                 <div className="bg-[#111216] border border-white/10 rounded-2xl p-6 sm:p-8 space-y-7 shadow-2xl relative">
                   <div className="flex items-center justify-between text-xs font-mono text-[#8E8E93] border-b border-white/10 pb-4">
-                    <span className="text-[#E50914] uppercase tracking-wider font-semibold">
+                    <span className="text-[#E50914] uppercase tracking-wider font-semibold flex items-center gap-1.5">
+                      <Zap className="w-3.5 h-3.5" />
                       CATEGORY: {currentQ.category}
                     </span>
-                    <span>AREA: {currentQ.stressArea}</span>
+                    <span>SECTION: {currentQ.stressArea}</span>
                   </div>
 
                   <div className="py-2">
@@ -281,16 +357,16 @@ export const AssessmentPage: React.FC = () => {
                     </h2>
                   </div>
 
-                  {/* 3 High-Impact Choice Buttons */}
+                  {/* 3 High-Impact Choice Buttons Connected Directly to Stress Logic */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     
                     {/* Choice: Yes */}
                     <button
                       type="button"
                       onClick={() => handleSelectAnswer(currentQ.id, 'Yes')}
-                      className={`p-6 rounded-2xl border text-center transition-all cursor-pointer ${
+                      className={`p-6 rounded-2xl border text-center transition-all cursor-pointer relative group ${
                         currentAnswer === 'Yes'
-                          ? 'border-[#E50914] bg-[#E50914]/15 ring-2 ring-[#E50914]'
+                          ? 'border-[#E50914] bg-[#E50914]/15 ring-2 ring-[#E50914] shadow-lg'
                           : 'border-white/10 bg-[#17181F] hover:border-white/25'
                       }`}
                     >
@@ -298,7 +374,10 @@ export const AssessmentPage: React.FC = () => {
                       <span className={`font-mono text-[11px] block mt-1 tracking-wider ${
                         currentAnswer === 'Yes' ? 'text-[#E50914] font-bold' : 'text-[#8E8E93]'
                       }`}>
-                        FREQUENTLY (2 PTS)
+                        FREQUENT (+2 PTS)
+                      </span>
+                      <span className="text-[10px] text-[#71717A] font-light block mt-1">
+                        High Risk Trigger
                       </span>
                     </button>
 
@@ -306,17 +385,20 @@ export const AssessmentPage: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => handleSelectAnswer(currentQ.id, 'Sometimes')}
-                      className={`p-6 rounded-2xl border text-center transition-all cursor-pointer ${
+                      className={`p-6 rounded-2xl border text-center transition-all cursor-pointer relative group ${
                         currentAnswer === 'Sometimes'
-                          ? 'border-[#E50914] bg-[#E50914]/15 ring-2 ring-[#E50914]'
+                          ? 'border-amber-500 bg-amber-500/15 ring-2 ring-amber-500 shadow-lg'
                           : 'border-white/10 bg-[#17181F] hover:border-white/25'
                       }`}
                     >
                       <span className="font-['Outfit'] text-2xl font-bold text-white block">Sometimes</span>
                       <span className={`font-mono text-[11px] block mt-1 tracking-wider ${
-                        currentAnswer === 'Sometimes' ? 'text-[#E50914] font-bold' : 'text-[#8E8E93]'
+                        currentAnswer === 'Sometimes' ? 'text-amber-400 font-bold' : 'text-[#8E8E93]'
                       }`}>
-                        OCCASIONALLY (1 PT)
+                        OCCASIONAL (+1 PT)
+                      </span>
+                      <span className="text-[10px] text-[#71717A] font-light block mt-1">
+                        Emerging Stressor
                       </span>
                     </button>
 
@@ -324,17 +406,20 @@ export const AssessmentPage: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => handleSelectAnswer(currentQ.id, 'No')}
-                      className={`p-6 rounded-2xl border text-center transition-all cursor-pointer ${
+                      className={`p-6 rounded-2xl border text-center transition-all cursor-pointer relative group ${
                         currentAnswer === 'No'
-                          ? 'border-[#E50914] bg-[#E50914]/15 ring-2 ring-[#E50914]'
+                          ? 'border-emerald-500 bg-emerald-500/15 ring-2 ring-emerald-500 shadow-lg'
                           : 'border-white/10 bg-[#17181F] hover:border-white/25'
                       }`}
                     >
                       <span className="font-['Outfit'] text-2xl font-bold text-white block">No</span>
                       <span className={`font-mono text-[11px] block mt-1 tracking-wider ${
-                        currentAnswer === 'No' ? 'text-[#E50914] font-bold' : 'text-[#8E8E93]'
+                        currentAnswer === 'No' ? 'text-emerald-400 font-bold' : 'text-[#8E8E93]'
                       }`}>
-                        RARELY / NEVER (0 PTS)
+                        RARE / NEVER (0 PTS)
+                      </span>
+                      <span className="text-[10px] text-[#71717A] font-light block mt-1">
+                        Protective Resilience
                       </span>
                     </button>
 
@@ -358,7 +443,7 @@ export const AssessmentPage: React.FC = () => {
                         onClick={() => setActiveQuestionIndex(i => Math.min(questions.length - 1, i + 1))}
                         className="px-6 py-2.5 bg-[#E50914] text-white rounded-full font-mono text-xs uppercase tracking-wider hover:bg-[#c20811] cursor-pointer shadow-md flex items-center gap-2"
                       >
-                        <span>Next Item</span>
+                        <span>Next Question</span>
                         <ArrowRight className="w-3.5 h-3.5" />
                       </button>
                     ) : (
@@ -377,29 +462,34 @@ export const AssessmentPage: React.FC = () => {
               );
             })()}
 
-            {/* Jump palette */}
+            {/* 20 Question Index Navigator */}
             <div className="bg-[#111216] border border-white/10 rounded-2xl p-5 shadow-xl">
               <span className="text-[11px] font-mono uppercase tracking-[0.2em] text-[#A1A1AA] block mb-3">
-                Question Index Navigator:
+                Question Index Navigator (1 to 20):
               </span>
               <div className="grid grid-cols-10 sm:grid-cols-20 gap-2 font-mono text-xs">
                 {questions.map((q, idx) => {
                   const isAnswered = answers[q.id] !== undefined;
                   const isCurrent = idx === activeQuestionIndex;
+                  const ansValue = answers[q.id];
 
                   return (
                     <button
                       key={q.id}
                       onClick={() => setActiveQuestionIndex(idx)}
-                      className={`h-8 rounded-lg font-semibold transition-all cursor-pointer ${
+                      className={`h-9 rounded-lg font-semibold transition-all cursor-pointer flex flex-col items-center justify-center ${
                         isCurrent
-                          ? 'bg-[#E50914] text-white shadow-md'
-                          : isAnswered
-                          ? 'bg-white/20 text-white hover:bg-white/30'
+                          ? 'bg-[#E50914] text-white shadow-md ring-2 ring-white/20'
+                          : ansValue === 'Yes'
+                          ? 'bg-[#E50914]/20 text-[#E50914] border border-[#E50914]/40 hover:bg-[#E50914]/30'
+                          : ansValue === 'Sometimes'
+                          ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40 hover:bg-amber-500/30'
+                          : ansValue === 'No'
+                          ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 hover:bg-emerald-500/30'
                           : 'bg-[#17181F] text-[#71717A] border border-white/10 hover:border-white/25'
                       }`}
                     >
-                      {idx + 1}
+                      <span className="text-xs">{idx + 1}</span>
                     </button>
                   );
                 })}
@@ -409,33 +499,66 @@ export const AssessmentPage: React.FC = () => {
           </div>
         )}
 
-        {/* STEP 3: REVIEW & SUBMISSION */}
+        {/* STEP 3: REVIEW & LIVE ANALYTICS PREVIEW */}
         {currentStep === 3 && (
           <div className="bg-[#111216] border border-white/10 rounded-2xl p-6 sm:p-8 space-y-6 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-white/10 pb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
               <div>
                 <h2 className="font-['Outfit'] text-2xl sm:text-3xl font-bold tracking-tight text-white">
-                  Verify Responses Before Scoring
+                  Diagnostic Analytics Summary
                 </h2>
                 <p className="font-mono text-xs text-[#8E8E93] mt-1">
-                  Responses will be securely validated and persisted to your student profile via PostgreSQL.
+                  Preview computed score metrics and response breakdown before persisting to your student dossier.
                 </p>
               </div>
               <button
                 onClick={() => setCurrentStep(2)}
                 className="text-xs font-mono text-[#E50914] uppercase tracking-wider hover:underline"
               >
-                Edit Items &rarr;
+                Modify Answers &rarr;
               </button>
+            </div>
+
+            {/* Quick Metrics Strip */}
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+              <div className="p-4 bg-[#17181F] border border-white/10 rounded-xl">
+                <span className="text-[10px] font-mono text-[#8E8E93] uppercase tracking-wider block">Calculated Score</span>
+                <span className="font-['Outfit'] text-3xl font-extrabold text-white">{runningScore} / 40</span>
+                <span className="text-[10px] font-mono text-[#71717A] block mt-1">Points Cumulative</span>
+              </div>
+              <div className="p-4 bg-[#17181F] border border-white/10 rounded-xl">
+                <span className="text-[10px] font-mono text-[#8E8E93] uppercase tracking-wider block">Classification</span>
+                <span className={`font-['Outfit'] text-2xl font-bold ${
+                  projectedLevel === 'High' ? 'text-[#E50914]' : projectedLevel === 'Moderate' ? 'text-amber-400' : 'text-emerald-400'
+                }`}>
+                  {projectedLevel} Stress
+                </span>
+                <span className="text-[10px] font-mono text-[#71717A] block mt-1">Protocol Tier</span>
+              </div>
+              <div className="p-4 bg-[#17181F] border border-white/10 rounded-xl">
+                <span className="text-[10px] font-mono text-[#8E8E93] uppercase tracking-wider block">Option Breakdown</span>
+                <div className="flex items-center gap-2 mt-1 text-xs font-mono">
+                  <span className="text-[#E50914]">Y: {yesCount}</span>
+                  <span className="text-amber-400">S: {sometimesCount}</span>
+                  <span className="text-emerald-400">N: {noCount}</span>
+                </div>
+                <span className="text-[10px] font-mono text-[#71717A] block mt-1">Response Ratio</span>
+              </div>
+              <div className="p-4 bg-[#17181F] border border-white/10 rounded-xl">
+                <span className="text-[10px] font-mono text-[#8E8E93] uppercase tracking-wider block">Screening Domain</span>
+                <span className="font-['Outfit'] text-xl font-bold text-white mt-1 block">{stressArea}</span>
+                <span className="text-[10px] font-mono text-[#71717A] block mt-1">20 Questions</span>
+              </div>
             </div>
 
             {!allAnswered && (
               <div className="p-3.5 bg-[#E50914]/10 border border-[#E50914]/40 rounded-xl text-xs font-mono text-[#FF4D57]">
-                ATTENTION: Only {answeredCount} of 20 questions are answered. Please complete all items before computing your score.
+                ATTENTION: {answeredCount} of 20 questions are answered. Please complete all items before computing your final score.
               </div>
             )}
 
-            <div className="max-h-96 overflow-y-auto border border-white/10 rounded-xl divide-y divide-white/10 font-mono text-xs">
+            {/* Detailed Items List */}
+            <div className="max-h-80 overflow-y-auto border border-white/10 rounded-xl divide-y divide-white/10 font-mono text-xs">
               {questions.map((q, i) => (
                 <div key={q.id} className="p-3.5 flex items-center justify-between gap-4 bg-[#17181F]/50">
                   <div className="flex items-start gap-3">
@@ -447,11 +570,13 @@ export const AssessmentPage: React.FC = () => {
                       <span className="text-[10px] text-[#71717A]">{q.category}</span>
                     </div>
                   </div>
-                  <span className={`text-[11px] font-mono uppercase px-2.5 py-1 rounded-full ${
+                  <span className={`text-[11px] font-mono uppercase px-2.5 py-1 rounded-full shrink-0 ${
                     answers[q.id] === 'Yes'
-                      ? 'bg-[#E50914]/15 text-[#E50914] border border-[#E50914]/30'
+                      ? 'bg-[#E50914]/20 text-[#E50914] border border-[#E50914]/30'
                       : answers[q.id] === 'Sometimes'
-                      ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
+                      ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                      : answers[q.id] === 'No'
+                      ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
                       : 'bg-white/10 text-white'
                   }`}>
                     {answers[q.id] || 'UNANSWERED'}
@@ -476,11 +601,11 @@ export const AssessmentPage: React.FC = () => {
                 className="inline-flex items-center gap-3 px-7 py-3.5 bg-[#E50914] hover:bg-[#c20811] text-white rounded-full text-xs font-semibold uppercase tracking-wider transition-all shadow-md group cursor-pointer disabled:opacity-50"
               >
                 {submitting ? (
-                  <span>Computing Prediction & Guidance...</span>
+                  <span>Processing Prediction & Generating Dossier...</span>
                 ) : (
                   <>
                     <Send className="w-4 h-4" />
-                    <span>Calculate Stress Prediction</span>
+                    <span>Persist & View Comprehensive Analytics</span>
                     <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center group-hover:translate-x-0.5 transition-transform">
                       <ArrowRight className="w-3 h-3 text-white" />
                     </div>

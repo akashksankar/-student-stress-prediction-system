@@ -283,6 +283,27 @@ router.get('/student/dashboard', authenticate, requireRole('student'), async (re
         [a.id]
       );
 
+      const respRes = await db.query(
+        `SELECT answer, count(*) as count FROM responses WHERE assessment_id = $1 GROUP BY answer`,
+        [a.id]
+      );
+      let yCount = 0;
+      let sCount = 0;
+      let nCount = 0;
+      respRes.rows.forEach((r: any) => {
+        if (r.answer === 'Yes') yCount = Number(r.count);
+        if (r.answer === 'Sometimes') sCount = Number(r.count);
+        if (r.answer === 'No') nCount = Number(r.count);
+      });
+      const optionDist = {
+        yesCount: yCount,
+        sometimesCount: sCount,
+        noCount: nCount,
+        yesPercentage: Math.round((yCount / 20) * 100),
+        sometimesPercentage: Math.round((sCount / 20) * 100),
+        noPercentage: Math.round((nCount / 20) * 100)
+      };
+
       latestAssessment = {
         id: a.id,
         stressArea: a.stress_area,
@@ -290,7 +311,8 @@ router.get('/student/dashboard', authenticate, requireRole('student'), async (re
         stressLevel: a.stress_level,
         status: a.status,
         completedAt: a.completed_at,
-        contributingFactors: factors
+        contributingFactors: factors,
+        optionDistribution: optionDist
       };
       latestRecommendations = recRes.rows;
     }
@@ -375,11 +397,11 @@ router.get('/assessments/questions', authenticate, async (req: Request, res: Res
     let params: any[] = [];
 
     if (stressArea === 'Home') {
-      query += `AND (stress_area = 'Home' OR stress_area = 'Both') ORDER BY id ASC LIMIT 20`;
+      query += `AND stress_area = 'Home' ORDER BY id ASC LIMIT 20`;
     } else if (stressArea === 'College/School') {
-      query += `AND (stress_area = 'College/School' OR stress_area = 'Both') ORDER BY id ASC LIMIT 20`;
+      query += `AND stress_area = 'College/School' ORDER BY id ASC LIMIT 20`;
     } else {
-      query += `ORDER BY id ASC LIMIT 20`;
+      query += `AND stress_area = 'Both' ORDER BY id ASC LIMIT 20`;
     }
 
     let qResult = await db.query(query, params);
@@ -473,6 +495,7 @@ router.post('/assessments/submit', authenticate, requireRole('student'), async (
       stressArea,
       totalScore: calcResult.totalScore,
       stressLevel: calcResult.stressLevel,
+      optionDistribution: calcResult.optionDistribution,
       contributingFactors: calcResult.contributingFactors,
       recommendations: calcResult.recommendationSuggestions,
       completedAt
@@ -530,6 +553,29 @@ router.get('/assessments/:assessmentId/result', authenticate, async (req: Authen
       [assessmentId]
     );
 
+    const respRes = await db.query(
+      `SELECT answer, count(*) as count FROM responses WHERE assessment_id = $1 GROUP BY answer`,
+      [assessmentId]
+    );
+
+    let yCount = 0;
+    let sCount = 0;
+    let nCount = 0;
+    respRes.rows.forEach((r: any) => {
+      if (r.answer === 'Yes') yCount = Number(r.count);
+      if (r.answer === 'Sometimes') sCount = Number(r.count);
+      if (r.answer === 'No') nCount = Number(r.count);
+    });
+
+    const optionDist = {
+      yesCount: yCount,
+      sometimesCount: sCount,
+      noCount: nCount,
+      yesPercentage: Math.round((yCount / 20) * 100),
+      sometimesPercentage: Math.round((sCount / 20) * 100),
+      noPercentage: Math.round((nCount / 20) * 100)
+    };
+
     res.json({
       assessment: {
         id: assessment.id,
@@ -540,6 +586,7 @@ router.get('/assessments/:assessmentId/result', authenticate, async (req: Authen
         stressArea: assessment.stress_area,
         totalScore: assessment.total_score,
         stressLevel: assessment.stress_level,
+        optionDistribution: optionDist,
         completedAt: assessment.completed_at,
         contributingFactors: factors,
         recommendations: recRes.rows,
