@@ -10,20 +10,22 @@ export async function getDb(): Promise<PGlite> {
     return pgliteInstance;
   }
 
-  const dataDir = path.resolve(process.cwd(), '.pgdata');
-  if (!fs.existsSync(dataDir)) {
-    try {
-      fs.mkdirSync(dataDir, { recursive: true });
-    } catch {
-      // In case directory creation fails, PGlite can run in-memory
-    }
-  }
-
+  const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.NOW_REGION);
+  const dataDir = isServerless ? '/tmp/.pgdata' : path.resolve(process.cwd(), '.pgdata');
+  
   try {
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true });
+    }
     pgliteInstance = new PGlite(dataDir);
   } catch (err) {
-    console.warn('Persistent PGlite failed, falling back to in-memory instance:', err);
-    pgliteInstance = new PGlite();
+    console.warn('Persistent PGlite storage failed, activating in-memory instance:', err);
+    try {
+      pgliteInstance = new PGlite();
+    } catch (e2) {
+      console.error('Fatal: Failed to start in-memory PGlite:', e2);
+      throw e2;
+    }
   }
 
   await initSchema(pgliteInstance);

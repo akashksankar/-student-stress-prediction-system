@@ -3,28 +3,14 @@ import http from 'http';
 import { WebSocketServer, WebSocket } from 'ws';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import apiRouter from './server/routes.js';
+import app from './server/app.js';
 import { getDb } from './server/db.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 async function startServer() {
-  const app = express();
   const server = http.createServer(app);
-
-  app.use(express.json());
-
-  // CORS for local development requests
-  app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-    if (req.method === 'OPTIONS') {
-      return res.sendStatus(200);
-    }
-    next();
-  });
 
   // Initialize DB on boot
   try {
@@ -33,9 +19,6 @@ async function startServer() {
   } catch (err) {
     console.error('Failed to initialize PostgreSQL database:', err);
   }
-
-  // Mount API endpoints
-  app.use('/api', apiRouter);
 
   // -------------------------------------------------------------------------
   // WebRTC Signalling & Real-Time Chat WebSocket Server
