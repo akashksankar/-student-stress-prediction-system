@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { api } from '../services/api';
+import { api, SEED_QUESTIONS } from '../services/api';
 import {
   Users,
   Activity,
@@ -19,7 +19,7 @@ export const AdminDashboardPage: React.FC = () => {
 
   const [dashboardData, setDashboardData] = useState<any>(null);
   const [students, setStudents] = useState<any[]>([]);
-  const [questions, setQuestions] = useState<any[]>([]);
+  const [questions, setQuestions] = useState<any[]>(() => SEED_QUESTIONS);
   const [reports, setReports] = useState<any[]>([]);
   const [counsellingRequests, setCounsellingRequests] = useState<any[]>([]);
   
@@ -50,7 +50,11 @@ export const AdminDashboardPage: React.FC = () => {
         setStudents(s.students);
       } else if (currentTab === 'questions') {
         const q = await api.getAdminQuestions();
-        setQuestions(q.questions);
+        if (q && q.questions && q.questions.length > 0) {
+          setQuestions(q.questions);
+        } else {
+          setQuestions(SEED_QUESTIONS);
+        }
       } else if (currentTab === 'counselling') {
         const c = await api.getAdminCounsellingRequests();
         setCounsellingRequests(c.requests);

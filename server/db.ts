@@ -18,10 +18,12 @@ export async function getDb(): Promise<PGlite> {
       fs.mkdirSync(dataDir, { recursive: true });
     }
     pgliteInstance = new PGlite(dataDir);
+    await pgliteInstance.waitReady;
   } catch (err) {
     console.warn('Persistent PGlite storage failed, activating in-memory instance:', err);
     try {
       pgliteInstance = new PGlite();
+      await pgliteInstance.waitReady;
     } catch (e2) {
       console.error('Fatal: Failed to start in-memory PGlite:', e2);
       throw e2;

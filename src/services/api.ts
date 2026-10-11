@@ -632,12 +632,38 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
       return await handleLocalFallback<T>(endpoint, options);
     }
 
-    // If server returned 401 on /auth/me, fallback to stored session instead of logging user out
-    if (response.status === 401 && endpoint.startsWith('/auth/me')) {
+    // Special handling for questions: always ensure exactly 20 questions are returned
+    if (endpoint.startsWith('/assessments/questions')) {
+      if (!response.ok) {
+        return await handleLocalFallback<T>(endpoint, options);
+      }
+      try {
+        const data = (await response.json()) as any;
+        if (data && Array.isArray(data.questions) && data.questions.length >= 20) {
+          return data as T;
+        }
+      } catch {}
+      return await handleLocalFallback<T>(endpoint, options);
+    }
+
+    // If server returned 401 on /auth/me or session verification, fallback to stored session
+    if (response.status === 401 && (endpoint.startsWith('/auth/me') || endpoint.startsWith('/student/dashboard') || endpoint.startsWith('/student/profile'))) {
       const stored = getStoredUser();
       if (stored) {
-        return { user: stored } as unknown as T;
+        if (endpoint.startsWith('/auth/me')) {
+          return { user: stored } as unknown as T;
+        }
+        return await handleLocalFallback<T>(endpoint, options);
       }
+    }
+
+    // If server returned 500/502/503/504, or on Vercel where database is absent/offline
+    if (response.status >= 500) {
+      return await handleLocalFallback<T>(endpoint, options);
+    }
+
+    // If server returned 401/403 and the user has a client session token
+    if ((response.status === 401 || response.status === 403) && token && !endpoint.startsWith('/auth/login')) {
       return await handleLocalFallback<T>(endpoint, options);
     }
 
@@ -649,6 +675,16 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
       } catch {
         errorMsg = `${response.status} ${response.statusText}`;
       }
+
+      // If login or registration returned error from server on Vercel, try local fallback
+      if (endpoint.startsWith('/auth/login') || endpoint.startsWith('/auth/register')) {
+        try {
+          return await handleLocalFallback<T>(endpoint, options);
+        } catch {
+          throw new Error(errorMsg);
+        }
+      }
+
       throw new Error(errorMsg);
     }
 
@@ -660,9 +696,15 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
       !err.message.includes('fetch') &&
       !err.message.includes('Failed to fetch') &&
       !err.message.includes('NetworkError') &&
-      !err.message.includes('JSON')
+      !err.message.includes('JSON') &&
+      !err.message.includes('Incorrect password') &&
+      !err.message.includes('already registered')
     ) {
-      throw err;
+      try {
+        return await handleLocalFallback<T>(endpoint, options);
+      } catch {
+        throw err;
+      }
     }
 
     return await handleLocalFallback<T>(endpoint, options);

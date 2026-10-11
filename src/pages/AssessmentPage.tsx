@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { api } from '../services/api';
+import { api, SEED_QUESTIONS } from '../services/api';
 import { StressArea, AnswerChoice, Question } from '../types';
 import {
   CheckCircle2,
@@ -13,7 +13,8 @@ import {
   Send,
   Zap,
   Activity,
-  ShieldCheck
+  ShieldCheck,
+  RefreshCw
 } from 'lucide-react';
 
 export const AssessmentPage: React.FC = () => {
@@ -21,7 +22,10 @@ export const AssessmentPage: React.FC = () => {
 
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
   const [stressArea, setStressArea] = useState<StressArea>('Both');
-  const [questions, setQuestions] = useState<Question[]>([]);
+  // Initialize synchronously with 20 items so it is NEVER blank or empty
+  const [questions, setQuestions] = useState<Question[]>(() => {
+    return SEED_QUESTIONS.filter(q => q.stressArea === 'Both').slice(0, 20).map((q, idx) => ({ ...q, index: idx + 1 }));
+  });
   const [answers, setAnswers] = useState<{ [qId: number]: AnswerChoice }>({});
   const [loading, setLoading] = useState<boolean>(false);
   const [submitting, setSubmitting] = useState<boolean>(false);
@@ -29,19 +33,38 @@ export const AssessmentPage: React.FC = () => {
 
   const [activeQuestionIndex, setActiveQuestionIndex] = useState<number>(0);
 
-  const handleProceedToQuestions = async () => {
+  // Auto-sync questions from API whenever stressArea changes, with instant guaranteed fallback
+  const loadAreaQuestions = async (area: StressArea) => {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.getQuestions(stressArea);
-      setQuestions(res.questions);
-      setActiveQuestionIndex(0);
-      setCurrentStep(2);
+      const res = await api.getQuestions(area);
+      if (res && Array.isArray(res.questions) && res.questions.length >= 20) {
+        setQuestions(res.questions);
+      } else {
+        const fallback = SEED_QUESTIONS.filter(q => q.stressArea === area).slice(0, 20).map((q, idx) => ({ ...q, index: idx + 1 }));
+        setQuestions(fallback.length >= 20 ? fallback : SEED_QUESTIONS.slice(0, 20).map((q, idx) => ({ ...q, index: idx + 1 })));
+      }
     } catch (err: any) {
-      setError(err.message || 'Failed to load questionnaire.');
+      console.warn('Network question fetch error, using built-in questions:', err);
+      const fallback = SEED_QUESTIONS.filter(q => q.stressArea === area).slice(0, 20).map((q, idx) => ({ ...q, index: idx + 1 }));
+      setQuestions(fallback.length >= 20 ? fallback : SEED_QUESTIONS.slice(0, 20).map((q, idx) => ({ ...q, index: idx + 1 })));
     } finally {
       setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    loadAreaQuestions(stressArea);
+    setActiveQuestionIndex(0);
+  }, [stressArea]);
+
+  const handleProceedToQuestions = async () => {
+    if (questions.length < 20) {
+      await loadAreaQuestions(stressArea);
+    }
+    setActiveQuestionIndex(0);
+    setCurrentStep(2);
   };
 
   const handleSelectAnswer = (qId: number, choice: AnswerChoice) => {
@@ -54,7 +77,7 @@ export const AssessmentPage: React.FC = () => {
   };
 
   const answeredCount = Object.keys(answers).length;
-  const allAnswered = questions.length === 20 && answeredCount === 20;
+  const allAnswered = questions.length > 0 && answeredCount === questions.length;
 
   // Real-time Options Logic Telemetry
   const runningScore = Object.values(answers).reduce((acc, ans) => {
@@ -124,24 +147,42 @@ export const AssessmentPage: React.FC = () => {
             </div>
 
             {/* Stepper Markers */}
+            {/* Stepper Markers */}
             <div className="flex items-center gap-2 font-mono text-xs">
-              <span className={`px-3 py-1.5 rounded-full uppercase tracking-wider text-[11px] font-medium transition-all ${
-                currentStep === 1 ? 'bg-[#E50914] text-white shadow-sm' : 'bg-white/5 text-[#8E8E93] border border-white/10'
-              }`}>
+              <button
+                type="button"
+                onClick={() => setCurrentStep(1)}
+                className={`px-3 py-1.5 rounded-full uppercase tracking-wider text-[11px] font-medium transition-all cursor-pointer ${
+                  currentStep === 1 ? 'bg-[#E50914] text-white shadow-sm' : 'bg-white/5 text-[#8E8E93] border border-white/10 hover:text-white'
+                }`}
+              >
                 01 Focus Domain
-              </span>
+              </button>
               <span className="text-white/20">/</span>
-              <span className={`px-3 py-1.5 rounded-full uppercase tracking-wider text-[11px] font-medium transition-all ${
-                currentStep === 2 ? 'bg-[#E50914] text-white shadow-sm' : 'bg-white/5 text-[#8E8E93] border border-white/10'
-              }`}>
+              <button
+                type="button"
+                onClick={() => {
+                  if (questions.length < 20) {
+                    loadAreaQuestions(stressArea);
+                  }
+                  setCurrentStep(2);
+                }}
+                className={`px-3 py-1.5 rounded-full uppercase tracking-wider text-[11px] font-medium transition-all cursor-pointer ${
+                  currentStep === 2 ? 'bg-[#E50914] text-white shadow-sm' : 'bg-white/5 text-[#8E8E93] border border-white/10 hover:text-white'
+                }`}
+              >
                 02 Questions (20)
-              </span>
+              </button>
               <span className="text-white/20">/</span>
-              <span className={`px-3 py-1.5 rounded-full uppercase tracking-wider text-[11px] font-medium transition-all ${
-                currentStep === 3 ? 'bg-[#E50914] text-white shadow-sm' : 'bg-white/5 text-[#8E8E93] border border-white/10'
-              }`}>
+              <button
+                type="button"
+                onClick={() => setCurrentStep(3)}
+                className={`px-3 py-1.5 rounded-full uppercase tracking-wider text-[11px] font-medium transition-all cursor-pointer ${
+                  currentStep === 3 ? 'bg-[#E50914] text-white shadow-sm' : 'bg-white/5 text-[#8E8E93] border border-white/10 hover:text-white'
+                }`}
+              >
                 03 Analytics Review
-              </span>
+              </button>
             </div>
           </div>
 
@@ -284,9 +325,26 @@ export const AssessmentPage: React.FC = () => {
         )}
 
         {/* STEP 2: 20 QUESTIONS MATRIX & LIVE STRESS TELEMETRY */}
-        {currentStep === 2 && questions.length > 0 && (
+        {currentStep === 2 && (
           <div className="space-y-6">
             
+            {questions.length === 0 ? (
+              <div className="bg-[#111216] border border-white/10 rounded-2xl p-12 text-center space-y-5 shadow-2xl">
+                <RefreshCw className="w-10 h-10 text-[#E50914] mx-auto animate-spin" />
+                <div className="space-y-1">
+                  <h3 className="font-['Outfit'] text-xl font-bold text-white">Loading 20 {stressArea} Questions</h3>
+                  <p className="text-xs text-[#9E9EA4]">Preparing your diagnostic assessment items...</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => loadAreaQuestions(stressArea)}
+                  className="px-6 py-2.5 bg-[#E50914] text-white rounded-full font-mono text-xs uppercase tracking-wider hover:bg-[#c20811] cursor-pointer"
+                >
+                  Load Questions Now
+                </button>
+              </div>
+            ) : (
+              <>
             {/* Live Telemetry Bar */}
             <div className="bg-[#111216] border border-white/10 rounded-2xl p-5 shadow-xl space-y-3">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs font-mono">
@@ -338,7 +396,8 @@ export const AssessmentPage: React.FC = () => {
 
             {/* Active Question Box */}
             {(() => {
-              const currentQ = questions[activeQuestionIndex];
+              const currentQ = questions[activeQuestionIndex] || questions[0];
+              if (!currentQ) return null;
               const currentAnswer = answers[currentQ.id];
 
               return (
@@ -495,6 +554,8 @@ export const AssessmentPage: React.FC = () => {
                 })}
               </div>
             </div>
+            </>
+            )}
 
           </div>
         )}

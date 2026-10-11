@@ -386,16 +386,85 @@ router.patch('/student/profile', authenticate, requireRole('student'), async (re
 });
 
 // ---------------------------------------------------------------------------
+// 60 Fully Formulated Built-in Questions (20 College, 20 Home, 20 Both)
+// ---------------------------------------------------------------------------
+export const STATIC_QUESTIONS = [
+  // 1-20: College/School Domain
+  { id: 1, questionText: "Do you feel overwhelmed by the volume of continuous internal assessments, projects, and assignment deadlines?", category: "Academic Workload", stressArea: "College/School", weight: 1 },
+  { id: 2, questionText: "Do you experience persistent nervousness, mental blankness, or rapid heartbeat before or during written tests?", category: "Examination Anxiety", stressArea: "College/School", weight: 1 },
+  { id: 3, questionText: "Do you struggle to keep pace with rapid syllabus coverage or difficult algorithmic and conceptual coursework?", category: "Coursework Difficulty", stressArea: "College/School", weight: 1 },
+  { id: 4, questionText: "Do you worry constantly about CGPA requirements, semester arrears, or exam performance benchmarks?", category: "Performance Pressure", stressArea: "College/School", weight: 1 },
+  { id: 5, questionText: "Do campus placement drives, technical interviews, and uncertainty about your post-college career path cause severe anxiety?", category: "Career Uncertainty", stressArea: "College/School", weight: 1 },
+  { id: 6, questionText: "Do you hesitate to ask professors or course instructors for help when coursework concepts become difficult?", category: "Faculty Communication", stressArea: "College/School", weight: 1 },
+  { id: 7, questionText: "Do practical programming labs, code execution errors, or viva-voce examinations trigger intense stress?", category: "Practical & Lab Strain", stressArea: "College/School", weight: 1 },
+  { id: 8, questionText: "Do you feel inferior or stressed when comparing your academic performance or projects to high-achieving classmates?", category: "Peer Competition", stressArea: "College/School", weight: 1 },
+  { id: 9, questionText: "Do unbalanced team contributions, missed group deadlines, or conflicts in capstone projects cause frustration?", category: "Teamwork Friction", stressArea: "College/School", weight: 1 },
+  { id: 10, questionText: "Does the pressure to maintain mandatory minimum campus attendance requirements cause you ongoing stress?", category: "Attendance Strain", stressArea: "College/School", weight: 1 },
+  { id: 11, questionText: "Do classroom presentations, seminar talks, or answering questions in front of peers induce dread?", category: "Presentation Dread", stressArea: "College/School", weight: 1 },
+  { id: 12, questionText: "Do you find it difficult to maintain focus and stay awake through consecutive multi-hour lecture blocks?", category: "Lecture Fatigue", stressArea: "College/School", weight: 1 },
+  { id: 13, questionText: "Do multiple simultaneous test dates across different subjects give you inadequate time to prepare thoroughly?", category: "Exam Scheduling", stressArea: "College/School", weight: 1 },
+  { id: 14, questionText: "Do noisy study halls, crowded campus spaces, or packed computer laboratories add to your mental exhaustion?", category: "Campus Environment", stressArea: "College/School", weight: 1 },
+  { id: 15, questionText: "Does uncertainty about grading criteria or subjective faculty assessment create frustration and worry?", category: "Grading Ambiguity", stressArea: "College/School", weight: 1 },
+  { id: 16, questionText: "Do you struggle to retain vast quantities of lecture notes and technical concepts before semester exams?", category: "Cognitive Overload", stressArea: "College/School", weight: 1 },
+  { id: 17, questionText: "Do you frequently worry that you are not academically competent enough for your degree program?", category: "Academic Imposter Syndrome", stressArea: "College/School", weight: 1 },
+  { id: 18, questionText: "Do you struggle to obtain required textbooks, library reference materials, or licensed laboratory software?", category: "Resource Constraints", stressArea: "College/School", weight: 1 },
+  { id: 19, questionText: "Do complex institutional paperwork, approval procedures, or administrative hurdles cause unnecessary stress?", category: "Institutional Bureaucracy", stressArea: "College/School", weight: 1 },
+  { id: 20, questionText: "Does the academic rigor and pace of your current semester feel unsustainable without additional support?", category: "Semester Exhaustion", stressArea: "College/School", weight: 1 },
+
+  // 21-40: Home Environment Domain
+  { id: 21, questionText: "Do family members place intense pressure or high grade expectations on your academic results?", category: "Family Expectations", stressArea: "Home", weight: 1 },
+  { id: 22, questionText: "Do frequent household noises, television, or conversations disrupt your concentration while studying at home?", category: "Household Distractions", stressArea: "Home", weight: 1 },
+  { id: 23, questionText: "Do you lack a private, quiet, and dedicated study desk or room at home for focused revision?", category: "Study Environment", stressArea: "Home", weight: 1 },
+  { id: 24, questionText: "Do household chores, grocery errands, or domestic duties frequently cut into your planned study schedule?", category: "Domestic Obligations", stressArea: "Home", weight: 1 },
+  { id: 25, questionText: "Do siblings or relatives constantly interrupt your deep work study blocks or online coursework?", category: "Family Interruptions", stressArea: "Home", weight: 1 },
+  { id: 26, questionText: "Do parents or relatives compare your academic achievements unfavorably with cousins or peers?", category: "Parental Comparisons", stressArea: "Home", weight: 1 },
+  { id: 27, questionText: "Do your late-night study hours or early morning schedules lead to misunderstandings or complaints from family?", category: "Routine Friction", stressArea: "Home", weight: 1 },
+  { id: 28, questionText: "Do family discussions about educational fees, book expenses, or household budgets cause you ongoing worry?", category: "Financial Stress", stressArea: "Home", weight: 1 },
+  { id: 29, questionText: "Do you feel hesitant to talk openly with your parents or guardians about personal stress or academic burnout?", category: "Emotional Distance", stressArea: "Home", weight: 1 },
+  { id: 30, questionText: "Do you feel guilty or judged by family members when you take casual rest breaks or engage in leisure at home?", category: "Rest Guilt", stressArea: "Home", weight: 1 },
+  { id: 31, questionText: "Do ongoing domestic arguments or household conflicts noticeably drain your emotional energy for studying?", category: "Domestic Conflict", stressArea: "Home", weight: 1 },
+  { id: 32, questionText: "Do unstable internet connectivity, power fluctuations, or hardware issues at home disrupt your study sessions?", category: "Home Infrastructure", stressArea: "Home", weight: 1 },
+  { id: 33, questionText: "Do family members' health concerns or caregiving duties add extra mental burden to your daily routine?", category: "Caregiving Burdens", stressArea: "Home", weight: 1 },
+  { id: 34, questionText: "Do irregular domestic meal timings or rushed home schedules affect your physical energy during study hours?", category: "Mealtime Disruptions", stressArea: "Home", weight: 1 },
+  { id: 35, questionText: "Do family members fail to realize how demanding and time-intensive your modern college curriculum actually is?", category: "Coursework Misunderstanding", stressArea: "Home", weight: 1 },
+  { id: 36, questionText: "Do you feel a lack of personal privacy or boundaries when trying to focus on assignments at home?", category: "Boundary Invasions", stressArea: "Home", weight: 1 },
+  { id: 37, questionText: "Does returning home to a stressful or demanding atmosphere drain the energy you need for homework revision?", category: "Domestic Atmosphere", stressArea: "Home", weight: 1 },
+  { id: 38, questionText: "Do you feel that your hard work and study efforts go unacknowledged or unappreciated at home?", category: "Lack of Affirmation", stressArea: "Home", weight: 1 },
+  { id: 39, questionText: "Do family members reprimand or question you whenever you must work on your laptop or phone for coursework?", category: "Screen Time Scrutiny", stressArea: "Home", weight: 1 },
+  { id: 40, questionText: "Does your home environment currently feel more stressful or demanding than a restorative sanctuary?", category: "Home Sanctuary Absence", stressArea: "Home", weight: 1 },
+
+  // 41-60: Both / Multidimensional Lifestyle Domain
+  { id: 41, questionText: "Do you regularly get fewer than 6 hours of sleep per night due to combined academic deadlines and late routines?", category: "Sleep Deprivation", stressArea: "Both", weight: 1 },
+  { id: 42, questionText: "Do you experience physical tension, recurring headaches, eye strain, or neck tightness during long study days?", category: "Physical Somatization", stressArea: "Both", weight: 1 },
+  { id: 43, questionText: "Do you spend excessive hours scrolling social media or screens to avoid facing looming coursework or responsibilities?", category: "Digital Avoidance", stressArea: "Both", weight: 1 },
+  { id: 44, questionText: "Do you skip regular meals, binge on junk snacks, or heavily rely on caffeine to sustain your daily energy?", category: "Nutritional Disruption", stressArea: "Both", weight: 1 },
+  { id: 45, questionText: "Do you chronically delay essential academic tasks while feeling intense guilt and panic about the delay?", category: "Procrastination Strain", stressArea: "Both", weight: 1 },
+  { id: 46, questionText: "Do you experience sudden mood shifts, irritability, or short temper with peers and family during high-pressure weeks?", category: "Emotional Dysregulation", stressArea: "Both", weight: 1 },
+  { id: 47, questionText: "Do you find it difficult to mentally switch off and relax without persistent anxious thoughts about pending obligations?", category: "Inability to Relax", stressArea: "Both", weight: 1 },
+  { id: 48, questionText: "Do you isolate yourself socially and avoid conversations with friends or family because of overwhelming workload?", category: "Social Isolation", stressArea: "Both", weight: 1 },
+  { id: 49, questionText: "Does daily travelling or public transit between home and campus leave you mentally and physically drained?", category: "Commute Exhaustion", stressArea: "Both", weight: 1 },
+  { id: 50, questionText: "Do personal living expenses, educational materials, or transportation costs cause you persistent personal stress?", category: "Personal Finances", stressArea: "Both", weight: 1 },
+  { id: 51, questionText: "Do you feel pulled in conflicting directions between academic performance, family expectations, and personal wellness?", category: "Multitasking Strain", stressArea: "Both", weight: 1 },
+  { id: 52, questionText: "Do you wake up feeling consistently unrefreshed, lethargic, or dreading the upcoming day's demands?", category: "Morning Lethargy", stressArea: "Both", weight: 1 },
+  { id: 53, questionText: "Do you experience frequent mental fatigue, brain fog, or difficulty maintaining attention during study tasks?", category: "Cognitive Fatigue", stressArea: "Both", weight: 1 },
+  { id: 54, questionText: "Do you feel overwhelmed by the thought of what will happen over the next semester or after graduation?", category: "Future Dread", stressArea: "Both", weight: 1 },
+  { id: 55, questionText: "Have you completely abandoned hobbies, exercise, or creative activities that previously helped you recharge?", category: "Leisure Abandonment", stressArea: "Both", weight: 1 },
+  { id: 56, questionText: "Does a small academic setback or domestic remark upset you far more than it normally would?", category: "Low Emotional Reserves", stressArea: "Both", weight: 1 },
+  { id: 57, questionText: "Do you feel that neither home nor campus provides a calm space where you can genuinely recuperate?", category: "Environmental Exhaustion", stressArea: "Both", weight: 1 },
+  { id: 58, questionText: "Do you feel overwhelmed when prioritizing multiple conflicting assignments and personal chores?", category: "Decision Paralysis", stressArea: "Both", weight: 1 },
+  { id: 59, questionText: "Do you keep your stress bottled up inside because you fear being perceived as weak or incapable?", category: "Concealed Distress", stressArea: "Both", weight: 1 },
+  { id: 60, questionText: "Does the combined weight of your college and home life currently feel close to your breaking point?", category: "Comprehensive Burnout", stressArea: "Both", weight: 1 }
+];
+
+// ---------------------------------------------------------------------------
 // Assessment & Questionnaire Endpoints
 // ---------------------------------------------------------------------------
-router.get('/assessments/questions', authenticate, async (req: Request, res: Response) => {
+router.get('/assessments/questions', async (req: Request, res: Response) => {
   const stressArea = (req.query.stressArea as string) || 'Both';
-  const db = await getDb();
 
   try {
+    const db = await getDb();
     let query = `SELECT id, question_text, category, stress_area, weight FROM questionnaires WHERE is_active = TRUE `;
-    let params: any[] = [];
-
     if (stressArea === 'Home') {
       query += `AND stress_area = 'Home' ORDER BY id ASC LIMIT 20`;
     } else if (stressArea === 'College/School') {
@@ -404,28 +473,42 @@ router.get('/assessments/questions', authenticate, async (req: Request, res: Res
       query += `AND stress_area = 'Both' ORDER BY id ASC LIMIT 20`;
     }
 
-    let qResult = await db.query(query, params);
+    const qResult = await db.query(query);
 
-    if (qResult.rows.length < 20) {
-      const allActive = await db.query(`SELECT id, question_text, category, stress_area, weight FROM questionnaires WHERE is_active = TRUE ORDER BY id ASC LIMIT 20`);
-      qResult = allActive;
+    if (qResult.rows && qResult.rows.length >= 20) {
+      return res.json({
+        stressArea,
+        totalQuestions: qResult.rows.length,
+        questions: qResult.rows.map((q: any, idx: number) => ({
+          index: idx + 1,
+          id: q.id,
+          questionText: q.question_text,
+          category: q.category,
+          stressArea: q.stress_area,
+          weight: q.weight || 1
+        }))
+      });
     }
-
-    res.json({
-      stressArea,
-      totalQuestions: qResult.rows.length,
-      questions: qResult.rows.map((q: any, idx: number) => ({
-        index: idx + 1,
-        id: q.id,
-        questionText: q.question_text,
-        category: q.category,
-        stressArea: q.stress_area,
-        weight: q.weight
-      }))
-    });
-  } catch (err: any) {
-    res.status(500).json({ error: 'Failed to retrieve assessment questions: ' + err.message });
+  } catch (err) {
+    console.warn('DB query in /assessments/questions failed, using guaranteed static set:', err);
   }
+
+  // Guaranteed fallback: exactly 20 area-specific questions
+  let targetQuestions = STATIC_QUESTIONS.filter(q => q.stressArea === stressArea);
+  if (targetQuestions.length < 20) {
+    targetQuestions = STATIC_QUESTIONS.filter(q => q.stressArea === 'Both');
+  }
+
+  const formatted = targetQuestions.slice(0, 20).map((q, idx) => ({
+    ...q,
+    index: idx + 1
+  }));
+
+  res.json({
+    stressArea,
+    totalQuestions: formatted.length,
+    questions: formatted
+  });
 });
 
 router.post('/assessments/submit', authenticate, requireRole('student'), async (req: AuthenticatedRequest, res: Response) => {
@@ -508,7 +591,7 @@ router.post('/assessments/submit', authenticate, requireRole('student'), async (
   }
 });
 
-router.get('/assessments/:assessmentId/result', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+const handleGetAssessmentResult = async (req: AuthenticatedRequest, res: Response) => {
   const assessmentId = Number(req.params.assessmentId);
   const user = req.user!;
   const db = await getDb();
@@ -596,7 +679,10 @@ router.get('/assessments/:assessmentId/result', authenticate, async (req: Authen
   } catch (err: any) {
     res.status(500).json({ error: 'Failed to retrieve assessment results: ' + err.message });
   }
-});
+};
+
+router.get('/assessments/:assessmentId/result', authenticate, handleGetAssessmentResult);
+router.get('/assessments/result/:assessmentId', authenticate, handleGetAssessmentResult);
 
 router.get('/student/assessments', authenticate, requireRole('student'), async (req: AuthenticatedRequest, res: Response) => {
   const db = await getDb();
@@ -1044,13 +1130,37 @@ router.get('/admin/students', authenticate, requireRole('admin'), async (req: Au
 });
 
 router.get('/admin/questions', authenticate, requireRole('admin'), async (req: AuthenticatedRequest, res: Response) => {
-  const db = await getDb();
   try {
+    const db = await getDb();
     const qList = await db.query(`SELECT * FROM questionnaires ORDER BY id ASC`);
-    res.json({ questions: qList.rows });
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    if (qList.rows && qList.rows.length >= 60) {
+      return res.json({
+        questions: qList.rows.map((q: any, idx: number) => ({
+          index: idx + 1,
+          id: q.id,
+          questionText: q.question_text,
+          category: q.category,
+          stressArea: q.stress_area,
+          weight: q.weight || 1,
+          isActive: q.is_active !== undefined ? q.is_active : true
+        }))
+      });
+    }
+  } catch (err) {
+    console.warn('DB query in /admin/questions failed, serving STATIC_QUESTIONS:', err);
   }
+
+  res.json({
+    questions: STATIC_QUESTIONS.map((q, idx) => ({
+      index: idx + 1,
+      id: q.id,
+      questionText: q.questionText,
+      category: q.category,
+      stressArea: q.stressArea,
+      weight: q.weight || 1,
+      isActive: true
+    }))
+  });
 });
 
 router.post('/admin/questions', authenticate, requireRole('admin'), async (req: AuthenticatedRequest, res: Response) => {
